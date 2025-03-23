@@ -19,3 +19,6 @@ def get_from_env() -> Config:
     except KeyError as e:
         logfire.error(f"Missing env var: {e}")
         exit(1)
+
+
+conf = get_from_env()
