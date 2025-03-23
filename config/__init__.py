@@ -7,6 +7,8 @@ class Config(TypedDict):
     LF_TOKEN: str
     BOT_TOKEN: str
     WEBHOOK_BASE: str
+    LOMBARDIS_USER: str
+    LOMBARDIS_PASSWORD: str
 
 
 def get_from_env() -> Config:
