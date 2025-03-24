@@ -64,7 +64,7 @@ async def on_shutdown(bot: Bot) -> None:
     logfire.info("Webhook deleted.")
 
 
-def start() -> None:
+def serve_webhook() -> None:
     dp = Dispatcher()
 
     dp.include_router(router)
