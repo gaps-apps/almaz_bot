@@ -1,5 +1,2 @@
-import logfire
-
-logfire.configure(token="SKIPPED")
-logfire.instrument_pydantic(record="failure")
-logfire.instrument_aiohttp_client()
+from .configure import logfire
+from .handlers import log_span
