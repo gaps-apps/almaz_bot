@@ -1,10 +1,17 @@
+from typing import Optional
+
 import aiosqlite
 
 from lombardis.api import LombardisAPI
 from logger import logfire
+from config import conf
+
+from .dto import ClientBasicInfoDTO
 
 
-async def fetch_and_store_clients(api: LombardisAPI, db_path: str = "lombardis.db"):
+async def fetch_and_update_local_db(db_path: str = "lombardis.db"):
+    api = LombardisAPI(conf["LOMBARDIS_USER"], conf["LOMBARDIS_PASSWORD"])
+
     with logfire.span("fetching and storing clients") as span:
         client_list_response = await api.fetch_clients_list()
         if not client_list_response or not client_list_response.ClientsList:
@@ -60,4 +67,46 @@ async def fetch_and_store_clients(api: LombardisAPI, db_path: str = "lombardis.d
             )
 
 
-# TODO get client id by phone
+async def get_client_id_by_phone(phone: str, db_path: str = "lombardis.db"):
+    async with aiosqlite.connect(db_path) as conn:
+        async with conn.execute(
+            "SELECT clientID FROM clients WHERE phone = ?", (phone,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return row[0] if row else None
+
+
+async def get_client_info_by_id(
+    client_id: str, db_path: str = "lombardis.db"
+) -> Optional[ClientBasicInfoDTO]:
+    async with aiosqlite.connect(db_path) as conn:
+        async with conn.execute(
+            """
+            SELECT clientID, phone, fullDebt, fullInterestsDebt, overdueDebt, overdueInterestsDebt, nearestPaymentDate
+            FROM clients
+            WHERE clientID = ?
+            """,
+            (client_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                return ClientBasicInfoDTO(*row)
+            return None
+
+
+async def get_client_info_by_phone(
+    phone: str, db_path: str = "lombardis.db"
+) -> Optional[ClientBasicInfoDTO]:
+    async with aiosqlite.connect(db_path) as conn:
+        async with conn.execute(
+            """
+            SELECT clientID, phone, fullDebt, fullInterestsDebt, overdueDebt, overdueInterestsDebt, nearestPaymentDate
+            FROM clients
+            WHERE phone = ?
+            """,
+            (phone,),
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                return ClientBasicInfoDTO(*row)
+            return None
