@@ -9,12 +9,17 @@ from lombardis.dto import (
     ClientDetailsResponse,
 )
 from logger import logfire
+from config import conf
 
 
 class LombardisAPI:
     BASE_URL = "SKIPPED"
 
-    def __init__(self, username: str, password: str):
+    def __init__(
+        self,
+        username: str = conf["LOMBARDIS_USER"],
+        password: str = conf["LOMBARDIS_PASSWORD"],
+    ):
         self.auth = aiohttp.BasicAuth(username, password)
 
     async def fetch_clients_list(self) -> ClientListResponse:
