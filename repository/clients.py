@@ -55,6 +55,9 @@ async def fetch_and_store_clients(api: LombardisAPI, db_path: str = "lombardis.d
                 )
 
             await conn.commit()
-            logfire.info("Client list successfully stored in the database.")
+            logfire.info(
+                f"Client list successfully stored in the database. Count: {len(client_list_response.ClientsList)}"
+            )
 
-#TODO get client id by phone
+
+# TODO get client id by phone
