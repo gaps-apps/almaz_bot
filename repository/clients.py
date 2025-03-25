@@ -10,10 +10,8 @@ from .dto import ClientBasicInfoDTO
 
 
 async def fetch_and_update_local_db(db_path: str = "lombardis.db"):
-    api = LombardisAPI(conf["LOMBARDIS_USER"], conf["LOMBARDIS_PASSWORD"])
-
-    with logfire.span("fetching and storing clients") as span:
-        client_list_response = await api.fetch_clients_list()
+    with logfire.span("fetching and storing clients"):
+        client_list_response = await LombardisAPI().fetch_clients_list()
         if not client_list_response or not client_list_response.ClientsList:
             logfire.warning("No clients retrieved from API.")
             return

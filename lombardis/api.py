@@ -23,7 +23,7 @@ class LombardisAPI:
         self.auth = aiohttp.BasicAuth(username, password)
 
     async def fetch_clients_list(self) -> ClientListResponse:
-        with logfire.span("fetching clients list") as span:
+        with logfire.span("fetching clients list"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
                     async with session.put(
@@ -33,8 +33,12 @@ class LombardisAPI:
                         raw_data = await response.read()
                         json_data = json.loads(raw_data.decode("utf-8"))
                         try:
-                            return ClientListResponse(**json_data)
-                        except ValidationError:
+                            clients_resp = ClientListResponse(**json_data)
+                            logfire.info(
+                                f"success fetch clients count={len(clients_resp.ClientsList)}"
+                            )
+                            return clients_resp
+                        except ValidationError as e:
                             logfire.exception(f"Validation Error: {e}")
                 except aiohttp.ClientResponseError as e:
                     logfire.exception(f"HTTP Error: {e.status} - {e.message}")
@@ -44,7 +48,7 @@ class LombardisAPI:
                     logfire.exception(f"Unexpected Error: {e}")
 
     async def get_client_loans(self, client_id: str) -> ClientLoanResponse:
-        with logfire.span("fetching client loans") as span:
+        with logfire.span(f"fetching client loans cliend_id={client_id}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
                     payload = json.dumps({"ClientID": client_id})
@@ -56,7 +60,11 @@ class LombardisAPI:
                         raw_data = await response.read()
                         json_data = json.loads(raw_data.decode("utf-8"))
                         try:
-                            return ClientLoanResponse(**json_data)
+                            loan_resp = ClientLoanResponse(**json_data)
+                            logfire.info(
+                                f"success fetch loans count={len(loan_resp.Loans)}"
+                            )
+                            return loan_resp
                         except ValidationError as e:
                             logfire.exception(f"Validation Error: {e}")
                 except aiohttp.ClientResponseError as e:
@@ -67,7 +75,7 @@ class LombardisAPI:
                     logfire.exception(f"Unexpected Error: {e}")
 
     async def get_client_details(self, client_id: str) -> ClientDetailsResponse:
-        with logfire.span("fetching client details") as span:
+        with logfire.span(f"fetching client details cliend_id={client_id}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
                     payload = json.dumps({"clientID": client_id})
@@ -81,7 +89,11 @@ class LombardisAPI:
                         raw_data = await response.read()
                         json_data = json.loads(raw_data.decode("utf-8"))
                         try:
-                            return ClientDetailsResponse(**json_data)
+                            client_details = ClientDetailsResponse(**json_data)
+                            logfire.info(
+                                f"success fetch client details client_id={client_id}"
+                            )
+                            return client_details
                         except ValidationError as e:
                             logfire.exception(f"Validation Error: {e}")
                 except aiohttp.ClientResponseError as e:

@@ -68,7 +68,6 @@ def format_client_info(client: ClientBasicInfoDTO, full_name: str) -> str:
 
 def get_loans_keyboard(client_id: str) -> InlineKeyboardMarkup:
     """Создает клавиатуру с кнопкой 'Залоги и оплата'."""
-    logfire.info(f"keyboard: loans_{client_id}")
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -230,7 +229,7 @@ def setup_handlers(router: Router) -> None:
     @router.callback_query(lambda c: c.data.startswith("loans_"))
     async def process_loans_callback(callback: CallbackQuery) -> None:
         client_id = callback.data.split("_")[1]
-        await callback.message.answer(f"🔍 Запрашиваю список залогов...")
+        await callback.message.answer("🔍 Запрашиваю список залогов...")
         await callback.answer()
 
         # Вызываем команду /loans принудительно
