@@ -11,11 +11,24 @@ from aiogram.types import (
     KeyboardButton,
 )
 
-from repository.dto import ClientDebtDTO
+from repository.dto import ClientDebtDTO, UserDTO
 from lombardis.schemas import ClientLoanResponse
 from lombardis.api import LombardisAPI
 from repository import users
+from repository import clients
 from logger import logfire
+
+from .text_constants import (
+    DEBT_INFO_HEADER,
+    DEBT_MENU_TEXT,
+    INTEREST_DEBT_HEADER,
+    LOANS_MENU_TEXT,
+    OVERDUE_DEBT_HEADER,
+    OVERDUE_INTEREST_DEBT_HEADER,
+    NEAREST_PAYMENT_HEADER,
+    NO_ACTIVE_LOANS,
+    PAWN_TICKET_HEADER,
+)
 
 
 def is_valid_phone_number(phone: str) -> bool:
@@ -41,11 +54,11 @@ def format_client_info(client: ClientDebtDTO, full_name: str) -> str:
 
     return (
         f"{hbold(full_name)}\n\n"
-        f"{hbold('💰 Полный долг:')} {hitalic(f'{client.full_debt:.2f} ₽')}\n"
-        f"{hbold('💸 Проценты:')} {hitalic(f'{client.full_interest_debt:.2f} ₽')}\n"
-        f"{hbold('⏳ Просроченный долг:')} {hitalic(f'{client.overdue_debt:.2f} ₽')}\n"
-        f"{hbold('📉 Просроченные проценты:')} {hitalic(f'{client.overdue_interest_debt:.2f} ₽')}\n\n"
-        f"{hbold('📅 Ближайшая дата платежа:')} {nearest_payment}\n"
+        f"{hbold(DEBT_INFO_HEADER)} {hitalic(f'{client.full_debt:.2f} ₽')}\n"
+        f"{hbold(INTEREST_DEBT_HEADER)} {hitalic(f'{client.full_interest_debt:.2f} ₽')}\n"
+        f"{hbold(OVERDUE_DEBT_HEADER)} {hitalic(f'{client.overdue_debt:.2f} ₽')}\n"
+        f"{hbold(OVERDUE_INTEREST_DEBT_HEADER)} {hitalic(f'{client.overdue_interest_debt:.2f} ₽')}\n\n"
+        f"{hbold(NEAREST_PAYMENT_HEADER)} {nearest_payment}\n"
     )
 
 
@@ -55,18 +68,28 @@ async def send_sms_code(phone: str) -> int:
     return code
 
 
-async def answer_debt_information(
-    message: Message, client: ClientDebtDTO, full_name: str
-) -> None:
+async def answer_debt_information(message: Message) -> None:
+    user: UserDTO = await users.get_user_by_params({"chat_id": message.from_user.id})
+
+    debt = await clients.get_basic_info_by_params({"phone_number": user.phone_number})
+
+    if debt is None:
+        # локальная база клиентов обновляется при запуске бота.
+        # если клиент свежее времени обновления базы, то нужно её обновить.
+        await clients.fetch_and_update_local_db()
+        debt = await clients.get_basic_info_by_params(
+            {"phone_number": user.phone_number}
+        )
+
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="💰 Общая информация")],
-            [KeyboardButton(text="💳 Залоги и оплата")],
+            [KeyboardButton(text=DEBT_MENU_TEXT)],
+            [KeyboardButton(text=LOANS_MENU_TEXT)],
         ],
         resize_keyboard=True,
     )
-    """Sends formatted client information as a message."""
-    formatted_text = format_client_info(client, full_name)
+    formatted_text = format_client_info(debt, user.full_name)
+    
     await message.answer(formatted_text, reply_markup=keyboard, parse_mode="HTML")
 
 
@@ -78,7 +101,7 @@ async def answer_loans_information(message: Message) -> None:
     )
 
     if not client_loans.Loans:
-        await message.answer("❌ У клиента нет активных залогов.")
+        await message.answer(NO_ACTIVE_LOANS)
         return
 
     keyboard = InlineKeyboardMarkup(
@@ -93,4 +116,4 @@ async def answer_loans_information(message: Message) -> None:
         ]
     )
 
-    await message.answer(f"📜 Залоговые билеты:", reply_markup=keyboard)
+    await message.answer(PAWN_TICKET_HEADER, reply_markup=keyboard)

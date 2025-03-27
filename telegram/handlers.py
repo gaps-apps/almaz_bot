@@ -15,8 +15,6 @@ from lombardis.api import LombardisAPI
 from repository import clients
 from repository import users
 
-from repository.dto import UserDTO
-
 from .helpers import (
     answer_debt_information,
     answer_loans_information,
@@ -25,7 +23,17 @@ from .helpers import (
     format_phone_number,
 )
 
-# TODO вынести все текстовые данные в отдельный файл.
+from .text_constants import (
+    INVALID_PHONE_MESSAGE,
+    START_MESSAGE,
+    TIMEOUT_MESSAGE,
+    CODE_SENT_MESSAGE,
+    REGISTRATION_SUCCESS_MESSAGE,
+    INVALID_CODE_MESSAGE,
+    DEBT_MENU_TEXT,
+    LOANS_MENU_TEXT,
+    PAYLOAN_SELECTION_MESSAGE,
+)
 
 
 class RegistrationState(StatesGroup):
@@ -39,34 +47,16 @@ def setup_handlers(router: Router) -> None:
         if await state.get_state() is None:
             if not await users.user_exists(message.from_user.id):
 
-                await message.answer(
-                    "Введите номер телефона клиента ломбарда. Для подтверждения личности вам придёт смс с кодом."
-                )
+                await message.answer(START_MESSAGE)
                 await state.set_state(RegistrationState.waiting_for_phone)
             else:
                 await debt_menu_handler(message)
 
-    @router.message(F.text == "💰 Общая информация")
+    @router.message(F.text == DEBT_MENU_TEXT)
     async def debt_menu_handler(message: Message):
-        user: UserDTO = await users.get_user_by_params(
-            {"chat_id": message.from_user.id}
-        )
+        await answer_debt_information(message)
 
-        basic_info = await clients.get_basic_info_by_params(
-            {"phone_number": user.phone_number}
-        )
-        if basic_info is None:
-            # локальная база клиентов обновляется при запуске бота.
-            # если клиент свежее времени обновления базы, то нужно её обновить.
-            await clients.fetch_and_update_local_db()
-            basic_info = await clients.get_basic_info_by_params(
-                {"phone_number": user.phone_number}
-            )
-        await answer_debt_information(
-            message, client=basic_info, full_name=user.full_name
-        )
-
-    @router.message(F.text == "💳 Залоги и оплата")
+    @router.message(F.text == LOANS_MENU_TEXT)
     async def loans_menu_handler(message: Message):
         await answer_loans_information(message)
 
@@ -75,22 +65,16 @@ def setup_handlers(router: Router) -> None:
         if is_valid_phone_number(message.text):
             verification_code = await send_sms_code(message.text)
             await state.update_data(phone=message.text, code=verification_code)
-            await message.answer(
-                "Код подтверждения отправлен. Пожалуйста, введите его в течение 1 минуты."
-            )
+            await message.answer(CODE_SENT_MESSAGE)
             await state.set_state(RegistrationState.waiting_for_code)
 
             await asyncio.sleep(60)
             current_state = await state.get_state()
             if current_state == RegistrationState.waiting_for_code.state:
-                await message.answer(
-                    "Время ожидания кода истекло. Пожалуйста, отправьте команду /start заново."
-                )
+                await message.answer(TIMEOUT_MESSAGE)
                 await state.clear()
         else:
-            await message.answer(
-                "Ошибка: введите корректный номер телефона в формате +79991234567 или 89991234567."
-            )
+            await message.answer(INVALID_PHONE_MESSAGE)
 
     @router.message(RegistrationState.waiting_for_code, F.text)
     async def code_verification_handler(message: Message, state: FSMContext) -> None:
@@ -111,25 +95,15 @@ def setup_handlers(router: Router) -> None:
                 client_id,
                 phone_number,
             )
-            await message.answer("Регистрация успешно завершена!")
+            await message.answer(REGISTRATION_SUCCESS_MESSAGE)
             await state.clear()
             await debt_menu_handler(message)
 
         else:
-            await message.answer("Ошибка: неверный код. Попробуйте ещё раз.")
+            await message.answer(INVALID_CODE_MESSAGE)
 
     @router.callback_query(lambda c: c.data.startswith("payloan_"))
     async def process_loan_payment_callback(callback: CallbackQuery) -> None:
         loan_id = callback.data.split("_")[1]
-        await callback.message.answer(
-            f"✅ Вы выбрали оплату долга {loan_id}. Пока оплата недоступна."
-        )
+        await callback.message.answer(PAYLOAN_SELECTION_MESSAGE.format(loan_id=loan_id))
         await callback.answer()
-
-
-##TODO
-# + 1. в залогах номер залогового билета, сумма займа и проценты по залогу
-# + 2. оплата количество процентов по залогу сумма оплаты.
-# 3. при нажатии на залог показать карточку залогового имущества, оплатить проценты.
-# 4. залоговые билеты, залоговое имущество.
-# 5. проценты мандарина должны быть включены в сумму оплаты.
