@@ -7,6 +7,11 @@ services:
       dockerfile: Dockerfile
     container_name: almaz_bot
     env_file: .env
+    volumes:
+      - db:/app/db
     restart: unless-stopped
     ports:
       - "8000:8000"
+
+volumes:
+  db:
