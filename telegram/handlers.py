@@ -59,7 +59,7 @@ def format_client_info(client: ClientBasicInfoDTO, full_name: str) -> str:
     return (
         f"{hbold(full_name)}\n\n"
         f"{hbold('💰 Полный долг:')} {hitalic(f'{client.fullDebt:.2f} ₽')}\n"
-        f"{hbold('💸 Полный долг с процентами:')} {hitalic(f'{client.fullInterestsDebt:.2f} ₽')}\n"
+        f"{hbold('💸 Проценты:')} {hitalic(f'{client.fullInterestsDebt:.2f} ₽')}\n"
         f"{hbold('⏳ Просроченный долг:')} {hitalic(f'{client.overdueDebt:.2f} ₽')}\n"
         f"{hbold('📉 Просроченные проценты:')} {hitalic(f'{client.overdueInterestsDebt:.2f} ₽')}\n\n"
         f"{hbold('📅 Ближайшая дата платежа:')} {nearest_payment}\n"
@@ -183,7 +183,7 @@ def setup_handlers(router: Router) -> None:
             full_name = " ".join(
                 [client_details.surname, client_details.name, client_details.patronymic]
             )
-            await users.add_user(
+            user = await users.add_user(
                 message.from_user.id,
                 full_name,
                 client_id,
@@ -199,7 +199,7 @@ def setup_handlers(router: Router) -> None:
                 await clients.fetch_and_update_local_db()
                 basic_info = await clients.get_client_info_by_phone(phone_number)
 
-            await send_client_info(message, client=basic_info)
+            await send_client_info(message, client=basic_info, full_name=user.full_name)
         else:
             await message.answer("Ошибка: неверный код. Попробуйте ещё раз.")
 
@@ -242,3 +242,11 @@ def setup_handlers(router: Router) -> None:
             f"✅ Вы выбрали оплату долга {loan_id}. Пока оплата недоступна."
         )
         await callback.answer()
+
+
+##TODO
+# 1. в залогах номер залогового билета, сумма займа и проценты по залогу
+# 2. оплата количество процентов по залогу сумма оплаты.
+# 3. при нажатии на залог показать карточку залогового имущества, оплатить проценты.
+# 4. залоговые билеты, залоговое имущество.
+# 5. проценты мандарина должны быть включены в сумму оплаты.

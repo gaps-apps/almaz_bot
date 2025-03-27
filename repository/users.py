@@ -31,7 +31,7 @@ async def user_exists(chat_id: int, db_name="users.db") -> bool:
 
 async def add_user(
     chat_id: int, full_name: str, client_id: str, phone_number: str, db_name="users.db"
-) -> None:
+) -> Optional[UserDTO]:
     """Adds a new user to the database."""
     async with aiosqlite.connect(db_name) as connection:
         await connection.execute(
@@ -42,6 +42,7 @@ async def add_user(
             (chat_id, full_name, client_id, phone_number),
         )
         await connection.commit()
+        return UserDTO(chat_id, full_name, client_id, phone_number)
 
 
 # TODO 3 funcs -> to one with params dict
