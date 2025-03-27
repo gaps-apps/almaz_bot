@@ -3,10 +3,11 @@ import json
 import aiohttp
 from pydantic import ValidationError
 
-from lombardis.dto import (
+from lombardis.schemas import (
     ClientListResponse,
     ClientLoanResponse,
     ClientDetailsResponse,
+    Loan,
 )
 from logger import logfire
 from config import conf
@@ -47,7 +48,7 @@ class LombardisAPI:
                 except Exception as e:
                     logfire.exception(f"Unexpected Error: {e}")
 
-    async def get_client_loans(self, client_id: str) -> ClientLoanResponse:
+    async def get_client_loans(self, client_id: str) -> list[Loan]:
         with logfire.span(f"fetching client loans cliend_id={client_id}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
