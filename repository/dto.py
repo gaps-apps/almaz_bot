@@ -3,7 +3,7 @@ from typing import Optional
 
 
 @dataclass
-class ClientBasicInfoDTO:
+class ClientDebtDTO:
     client_id: str
     phone_number: str
     full_debt: float

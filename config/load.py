@@ -13,6 +13,8 @@ class Config(TypedDict):
     WEB_SERVER_PORT: str
     LOMBARDIS_USER: str
     LOMBARDIS_PASSWORD: str
+    USERS_DB: str
+    LOMBARDIS_DB: str
 
 
 def get_from_env() -> Config:

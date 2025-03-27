@@ -4,11 +4,12 @@ import aiosqlite
 
 from lombardis.api import LombardisAPI
 from logger import logfire
+from config import conf
 
-from .dto import ClientBasicInfoDTO
+from .dto import ClientDebtDTO
 
 
-async def fetch_and_update_local_db(db_path: str = "lombardis.db"):
+async def fetch_and_update_local_db(db_path: str = conf["LOMBARDIS_DB"]):
     with logfire.span("fetching and storing clients"):
         client_list_response = await LombardisAPI().fetch_clients_list()
         if not client_list_response or not client_list_response.ClientsList:
@@ -64,7 +65,9 @@ async def fetch_and_update_local_db(db_path: str = "lombardis.db"):
             )
 
 
-async def get_client_id_by_phone(phone_number: str, db_path: str = "lombardis.db"):
+async def get_client_id_by_phone(
+    phone_number: str, db_path: str = conf["LOMBARDIS_DB"]
+):
     async with aiosqlite.connect(db_path) as conn:
         async with conn.execute(
             "SELECT client_id FROM clients WHERE phone_number = ?", (phone_number,)
@@ -74,8 +77,8 @@ async def get_client_id_by_phone(phone_number: str, db_path: str = "lombardis.db
 
 
 async def get_basic_info_by_params(
-    params: Dict[str, str], db_path: str = "lombardis.db"
-) -> Optional[ClientBasicInfoDTO]:
+    params: Dict[str, str], db_path: str = conf["LOMBARDIS_DB"]
+) -> Optional[ClientDebtDTO]:
     if not params:
         return None
 
@@ -94,5 +97,5 @@ async def get_basic_info_by_params(
         async with conn.execute(query, values) as cursor:
             row = await cursor.fetchone()
             if row:
-                return ClientBasicInfoDTO(*row)
+                return ClientDebtDTO(*row)
             return None

@@ -1,10 +1,12 @@
 import aiosqlite
 from typing import Optional
 
+from config import conf
+
 from .dto import UserDTO
 
 
-async def create_users_table(db_name="users.db"):
+async def create_users_table(db_name=conf["USERS_DB"]):
     """Creates an SQLite table with chat_id, full_name, and clientID using aiosqlite."""
     async with aiosqlite.connect(db_name) as connection:
         await connection.execute(
@@ -20,7 +22,7 @@ async def create_users_table(db_name="users.db"):
         await connection.commit()
 
 
-async def user_exists(chat_id: int, db_name="users.db") -> bool:
+async def user_exists(chat_id: int, db_name=conf["USERS_DB"]) -> bool:
     """Checks if a user with the given chat_id exists in the database."""
     async with aiosqlite.connect(db_name) as connection:
         async with connection.execute(
@@ -30,7 +32,11 @@ async def user_exists(chat_id: int, db_name="users.db") -> bool:
 
 
 async def add_user(
-    chat_id: int, full_name: str, client_id: str, phone_number: str, db_name="users.db"
+    chat_id: int,
+    full_name: str,
+    client_id: str,
+    phone_number: str,
+    db_name=conf["USERS_DB"],
 ) -> Optional[UserDTO]:
     """Adds a new user to the database."""
     async with aiosqlite.connect(db_name) as connection:
@@ -45,7 +51,9 @@ async def add_user(
         return UserDTO(chat_id, full_name, client_id, phone_number)
 
 
-async def get_user_by_params(params: dict, db_name="users.db") -> Optional[UserDTO]:
+async def get_user_by_params(
+    params: dict, db_name=conf["USERS_DB"]
+) -> Optional[UserDTO]:
     """Fetches a user by given parameters."""
     if not params:
         raise ValueError("At least one parameter must be provided.")
