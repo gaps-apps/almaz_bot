@@ -132,7 +132,9 @@ def setup_handlers(router: Router) -> None:
                 )
                 await state.set_state(RegistrationState.waiting_for_phone)
             else:
-                user: UserDTO = await users.get_user_by_chat_id(message.from_user.id)
+                user: UserDTO = await users.get_user_by_params(
+                    {"chat_id": message.from_user.id}
+                )
 
                 basic_info = await clients.get_client_info_by_phone(user.phone_number)
                 if basic_info is None:

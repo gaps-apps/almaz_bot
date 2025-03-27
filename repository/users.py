@@ -45,66 +45,23 @@ async def add_user(
         return UserDTO(chat_id, full_name, client_id, phone_number)
 
 
-# TODO 3 funcs -> to one with params dict
+async def get_user_by_params(params: dict, db_name="users.db") -> Optional[UserDTO]:
+    """Fetches a user by given parameters."""
+    if not params:
+        raise ValueError("At least one parameter must be provided.")
 
+    conditions = " AND ".join([f"{key} = ?" for key in params.keys()])
+    values = tuple(params.values())
+    query = f"SELECT chat_id, full_name, client_id, phone_number FROM users WHERE {conditions}"
 
-async def get_user_by_chat_id(chat_id: int, db_name="users.db") -> Optional[UserDTO]:
-    """Fetches a user by chat_id."""
     async with aiosqlite.connect(db_name) as connection:
-        async with connection.execute(
-            "SELECT chat_id, full_name, client_id, phone_number FROM users WHERE chat_id = ?",
-            (chat_id,),
-        ) as cursor:
+        async with connection.execute(query, values) as cursor:
             row = await cursor.fetchone()
             if row:
                 return UserDTO(
-                    **{
-                        "chat_id": row[0],
-                        "full_name": row[1],
-                        "client_id": row[2],
-                        "phone_number": row[3],
-                    }
-                )
-            return None
-
-
-async def get_user_by_phone(phone_number: str, db_name="users.db") -> Optional[UserDTO]:
-    """Fetches a user by phone_number."""
-    async with aiosqlite.connect(db_name) as connection:
-        async with connection.execute(
-            "SELECT chat_id, full_name, client_id, phone_number FROM users WHERE phone_number = ?",
-            (phone_number,),
-        ) as cursor:
-            row = await cursor.fetchone()
-            if row:
-                return UserDTO(
-                    **{
-                        "chat_id": row[0],
-                        "full_name": row[1],
-                        "client_id": row[2],
-                        "phone_number": row[3],
-                    }
-                )
-            return None
-
-
-async def get_user_by_client_id(
-    client_id: str, db_name="users.db"
-) -> Optional[UserDTO]:
-    """Fetches a user by client_id."""
-    async with aiosqlite.connect(db_name) as connection:
-        async with connection.execute(
-            "SELECT chat_id, full_name, client_id, phone_number FROM users WHERE client_id = ?",
-            (client_id,),
-        ) as cursor:
-            row = await cursor.fetchone()
-            if row:
-                return UserDTO(
-                    **{
-                        "chat_id": row[0],
-                        "full_name": row[1],
-                        "client_id": row[2],
-                        "phone_number": row[3],
-                    }
+                    chat_id=row[0],
+                    full_name=row[1],
+                    client_id=row[2],
+                    phone_number=row[3],
                 )
             return None
