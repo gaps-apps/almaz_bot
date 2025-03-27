@@ -4,6 +4,7 @@ from typing import TypedDict
 
 
 class Config(TypedDict):
+    POLLING: str
     ADMIN_SECRET: str
     LF_TOKEN: str
     BOT_TOKEN: str

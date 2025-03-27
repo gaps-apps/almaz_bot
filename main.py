@@ -14,8 +14,15 @@ if __name__ == "__main__":
     asyncio.run(create_users_table())
     asyncio.run(fetch_and_update_local_db())
 
-    web.run_app(
-        get_webhook_app(*get_dispatcher()),
-        host=conf["WEB_SERVER_HOST"],
-        port=int(conf["WEB_SERVER_PORT"]),
-    )
+    if conf["POLLING"].lower() == "true":
+
+        dp, bot = get_dispatcher()
+        asyncio.run(dp.start_polling(bot))
+
+    else:
+
+        web.run_app(
+            get_webhook_app(*get_dispatcher()),
+            host=conf["WEB_SERVER_HOST"],
+            port=int(conf["WEB_SERVER_PORT"]),
+        )
