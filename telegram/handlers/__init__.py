@@ -1,4 +1,4 @@
-from .handlers import router as start_router
+from .start import router as start_router
 from .menu import router as menu_router
 from .payment import router as payment_router
 

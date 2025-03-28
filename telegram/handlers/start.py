@@ -48,7 +48,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         if not await users.user_exists(message.from_user.id):
             keyboard = ReplyKeyboardMarkup(
                 keyboard=[
-                    [KeyboardButton(text="Отправить контакт", request_contact=True)],
+                    [KeyboardButton(text="Отправить мой номер", request_contact=True)],
                 ],
                 resize_keyboard=True,
             )
@@ -58,11 +58,13 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
             await debt_menu_handler(message)
 
 
-@router.message(RegistrationState.waiting_for_phone)
+@router.message(RegistrationState.waiting_for_phone, lambda message: message.contact)
 async def phone_number_handler(message: Message, state: FSMContext) -> None:
-    if is_valid_phone_number(message.text):
-        verification_code = await send_sms_code(message.text)
-        await state.update_data(phone=message.text, code=verification_code)
+    if is_valid_phone_number(message.contact.phone_number):
+        verification_code = await send_sms_code(message.contact.phone_number)
+        await state.update_data(
+            phone=message.contact.phone_number, code=verification_code
+        )
         await message.answer(CODE_SENT_MESSAGE)
         await state.set_state(RegistrationState.waiting_for_code)
 
