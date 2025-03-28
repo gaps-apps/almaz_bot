@@ -39,13 +39,13 @@ router = Router()
 async def debt_menu_handler(message: Message):
     user: UserDTO = await users.get_user_by_params({"chat_id": message.from_user.id})
 
-    debt = await clients.get_basic_info_by_params({"phone_number": user.phone_number})
+    debt = await clients.get_debt_by_params({"phone_number": user.phone_number})
 
     if debt is None:
         # локальная база клиентов обновляется при запуске бота.
         # если клиент свежее времени обновления базы, то нужно её обновить.
         await clients.fetch_and_update_local_db()
-        debt = await clients.get_basic_info_by_params(
+        debt = await clients.get_debt_by_params(
             {"phone_number": user.phone_number}
         )
 
@@ -56,6 +56,7 @@ async def debt_menu_handler(message: Message):
         ],
         resize_keyboard=True,
     )
+
     nearest_payment = (
         datetime.fromisoformat(debt.nearest_payment_date).strftime("%d.%m.%Y")
         if debt.nearest_payment_date

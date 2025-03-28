@@ -76,7 +76,7 @@ async def get_client_id_by_phone(
             return row[0] if row else None
 
 
-async def get_basic_info_by_params(
+async def get_debt_by_params(
     params: Dict[str, str], db_path: str = conf["LOMBARDIS_DB"]
 ) -> Optional[ClientDebtDTO]:
     if not params:
