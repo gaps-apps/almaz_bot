@@ -15,12 +15,12 @@ if __name__ == "__main__":
     asyncio.run(fetch_and_update_local_db())
 
     if conf["POLLING"].lower() == "true":
-
+        # polling mode
         dp, bot = get_dispatcher()
         asyncio.run(dp.start_polling(bot))
 
     else:
-
+        # webhook mode ()
         web.run_app(
             get_webhook_app(*get_dispatcher()),
             host=conf["WEB_SERVER_HOST"],
