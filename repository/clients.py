@@ -1,4 +1,7 @@
+import asyncio
+
 from typing import Optional, Dict
+from datetime import datetime, timedelta, timezone
 
 import aiosqlite
 
@@ -99,3 +102,25 @@ async def get_debt_by_params(
             if row:
                 return ClientDebtDTO(*row)
             return None
+
+
+LAST_DB_UPDATE = None
+DB_UPDATE_LOCK = asyncio.Lock()
+
+
+async def get_or_update_client_id(phone_number: str) -> str | None:
+    global LAST_DB_UPDATE
+
+    client_id = await get_client_id_by_phone(phone_number)
+
+    if client_id:
+        return client_id
+    
+    async with DB_UPDATE_LOCK:
+        now = datetime.now(timezone.utc)
+
+        if LAST_DB_UPDATE is None or now - LAST_DB_UPDATE > timedelta(minutes=10):
+            await fetch_and_update_local_db()
+            LAST_DB_UPDATE = datetime.now(timezone.utc)
+
+        return await get_client_id_by_phone(phone_number)

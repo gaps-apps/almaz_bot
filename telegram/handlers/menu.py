@@ -41,14 +41,6 @@ async def debt_menu_handler(message: Message):
 
     debt = await clients.get_debt_by_params({"phone_number": user.phone_number})
 
-    if debt is None:
-        # локальная база клиентов обновляется при запуске бота.
-        # если клиент свежее времени обновления базы, то нужно её обновить.
-        await clients.fetch_and_update_local_db()
-        debt = await clients.get_debt_by_params(
-            {"phone_number": user.phone_number}
-        )
-
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=DEBT_MENU_TEXT)],

@@ -61,10 +61,24 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
 @router.message(RegistrationState.waiting_for_phone, lambda message: message.contact)
 async def phone_number_handler(message: Message, state: FSMContext) -> None:
     if is_valid_phone_number(message.contact.phone_number):
-        verification_code = await send_sms_code(message.contact.phone_number)
+
+        phone_number = format_phone_number(message.contact.phone_number)
+
+        client_id = await clients.get_or_update_client_id(phone_number)
+
+        if client_id is None:
+            await message.answer("Клиент с таким номером телефона не найден. Верификация номера отменена.")
+            state.clear()
+            return
+
+        verification_code = await send_sms_code(phone_number)
+
         await state.update_data(
-            phone=message.contact.phone_number, code=verification_code
+            phone=message.contact.phone_number,
+            code=verification_code,
+            client_id=client_id,
         )
+
         await message.answer(CODE_SENT_MESSAGE)
         await state.set_state(RegistrationState.waiting_for_code)
 
@@ -82,7 +96,8 @@ async def code_verification_handler(message: Message, state: FSMContext) -> None
     data = await state.get_data()
     if message.text == str(data.get("code")):
         phone_number = format_phone_number(data.get("phone"))
-        client_id = await clients.get_client_id_by_phone(phone_number)
+
+        client_id = data.get("client_id")
 
         client_details: ClientDetailsResponse = await LombardisAPI().get_client_details(
             client_id
