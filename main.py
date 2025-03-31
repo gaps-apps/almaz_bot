@@ -7,22 +7,32 @@ from repository.users import create_users_table
 from config import conf
 
 from telegram.webhook import get_webhook_app
+from telegram.handlers import commands_menu
 from telegram.bot import get_dispatcher
 
 
+async def init(bot):
+    await asyncio.gather(
+        create_users_table(),
+        fetch_and_update_local_db(),
+        commands_menu.set_bot_commands(bot),
+    )
+
+
 if __name__ == "__main__":
-    asyncio.run(create_users_table())
-    asyncio.run(fetch_and_update_local_db())
+    dp, bot = get_dispatcher()
+
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(init(bot))
 
     if conf["POLLING"].lower() == "true":
         # polling mode
-        dp, bot = get_dispatcher()
-        asyncio.run(dp.start_polling(bot))
+        loop.run_until_complete(dp.start_polling(bot))
 
     else:
         # webhook mode
         web.run_app(
-            get_webhook_app(*get_dispatcher()),
+            get_webhook_app(dp, bot),
             host=conf["WEB_SERVER_HOST"],
             port=int(conf["WEB_SERVER_PORT"]),
         )
