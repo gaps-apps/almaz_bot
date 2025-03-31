@@ -10,10 +10,10 @@ from aiogram.utils.markdown import hitalic
 
 from lombardis.api import LombardisAPI
 
-from lombardis.schemas import ClientDetailsResponse
 from repository.dto import UserDTO
 from repository import clients
-from repository import users
+from repository.users import UsersRepo
+
 
 from .helpers import (
     is_valid_phone_number,
@@ -43,14 +43,16 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def command_start_handler(message: Message, state: FSMContext) -> None:
+async def command_start_handler(
+    message: Message, state: FSMContext, users: UsersRepo
+) -> None:
+    # if not in a process of verification
     if await state.get_state() not in [
         RegistrationState.waiting_for_code,
         RegistrationState.waiting_for_phone,
     ]:
-        # not in a process of verification
+        # if user is not registered yet
         if not await users.user_exists(message.from_user.id):
-            # user is not registered yet
             keyboard = ReplyKeyboardBuilder()
             keyboard.button(text=SEND_MY_CONTACT_BUTTON, request_contact=True)
 
@@ -113,7 +115,9 @@ async def phone_number_handler(message: Message, state: FSMContext) -> None:
 
 
 @router.message(RegistrationState.waiting_for_code, F.text)
-async def code_verification_handler(message: Message, state: FSMContext) -> None:
+async def code_verification_handler(
+    message: Message, state: FSMContext, users: UsersRepo
+) -> None:
     # received code for verification
     data = await state.get_data()  # got client data from FSM
     if message.text == str(data.get("code")):

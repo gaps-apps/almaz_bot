@@ -3,17 +3,20 @@ import asyncio
 from aiohttp import web
 
 from repository.clients import fetch_and_update_local_db
-from repository.users import create_users_table
-from config import conf
+from repository.users import UsersRepo
 
 from telegram.webhook import get_webhook_app
 from telegram.handlers import commands_menu
 from telegram.bot import get_dispatcher
 
+from config import conf
+
+users = UsersRepo()
+
 
 async def init(bot):
     await asyncio.gather(
-        create_users_table(),
+        users.bootstrap(),
         fetch_and_update_local_db(),
         commands_menu.set_bot_commands(bot),
     )
@@ -27,7 +30,7 @@ if __name__ == "__main__":
 
     if conf["POLLING"].lower() == "true":
         # polling mode
-        loop.run_until_complete(dp.start_polling(bot))
+        loop.run_until_complete(dp.start_polling(bot, users=users))
 
     else:
         # webhook mode

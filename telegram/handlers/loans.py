@@ -13,7 +13,7 @@ from lombardis.schemas import ClientLoansResponse, LoanDetailsResponse
 from lombardis.api import LombardisAPI
 
 from repository.dto import UserDTO
-from repository import users
+from repository.users import UsersRepo
 
 from .text_constants import (
     LOANS_MENU_TEXT,
@@ -34,7 +34,7 @@ router = Router()
 
 
 @router.message(F.text == LOANS_MENU_TEXT)
-async def loans_menu_handler(message: Message, state: FSMContext):
+async def loans_menu_handler(message: Message, state: FSMContext, users: UsersRepo):
     user = await users.get_user_by_params({"chat_id": message.chat.id})
     user: UserDTO
 
