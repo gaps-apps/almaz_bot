@@ -115,7 +115,7 @@ async def get_or_update_client_id(phone_number: str) -> str | None:
 
     if client_id:
         return client_id
-    
+
     async with DB_UPDATE_LOCK:
         now = datetime.now(timezone.utc)
 

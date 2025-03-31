@@ -8,6 +8,7 @@ from lombardis.schemas import (
     ClientLoanResponse,
     ClientDetailsResponse,
     Loan,
+    LoanDetails,
 )
 from logger import logfire
 from config import conf
@@ -103,3 +104,29 @@ class LombardisAPI:
                     logfire.exception(f"Request Error: {e}")
                 except Exception as e:
                     logfire.exception(f"Unexpected Error: {e}")
+
+    async def get_loan_details(self, loan_id: str) -> LoanDetails:
+        """Fetches loan details for a given loan ID."""
+        with logfire.span(f"fetching loan details loan_id={loan_id}"):
+            async with aiohttp.ClientSession(auth=self.auth) as session:
+                try:
+                    payload = json.dumps({"LoanID": loan_id})
+                    headers = {"Content-Type": "application/json"}
+                    async with session.put(
+                        self.BASE_URL + "getLoanDetails", data=payload, headers=headers
+                    ) as response:
+                        response.raise_for_status()
+                        raw_data = await response.read()
+                        json_data = json.loads(raw_data.decode("utf-8"))
+                        loan_details = LoanDetails(**json_data)
+                        logfire.info(f"success fetch loan details loan_id={loan_id}")
+                        return loan_details
+                except ValidationError as e:
+                    logfire.exception(f"Validation Error: {e}")
+                except aiohttp.ClientResponseError as e:
+                    logfire.exception(f"HTTP Error: {e.status} - {e.message}")
+                except aiohttp.ClientError as e:
+                    logfire.exception(f"Request Error: {e}")
+                except Exception as e:
+                    logfire.exception(f"Unexpected Error: {e}")
+        return None

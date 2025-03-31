@@ -67,7 +67,9 @@ async def phone_number_handler(message: Message, state: FSMContext) -> None:
         client_id = await clients.get_or_update_client_id(phone_number)
 
         if client_id is None:
-            await message.answer("Клиент с таким номером телефона не найден. Верификация номера отменена.")
+            await message.answer(
+                "Клиент с таким номером телефона не найден. Верификация номера отменена."
+            )
             state.clear()
             return
 

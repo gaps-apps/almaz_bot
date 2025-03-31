@@ -20,7 +20,7 @@ if __name__ == "__main__":
         asyncio.run(dp.start_polling(bot))
 
     else:
-        # webhook mode ()
+        # webhook mode
         web.run_app(
             get_webhook_app(*get_dispatcher()),
             host=conf["WEB_SERVER_HOST"],

@@ -84,7 +84,7 @@ async def loans_menu_handler(message: Message):
             [
                 InlineKeyboardButton(
                     text=f"{loan.pawnBillNumber}",
-                    callback_data=f"payloan_{loan.LoanID}",
+                    callback_data=f"loan_{loan.LoanID}",
                 )
             ]
             for loan in client_loans.Loans
