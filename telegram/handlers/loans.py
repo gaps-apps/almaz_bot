@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from aiogram import Router, F
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -7,9 +9,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.utils.markdown import hbold, hitalic
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.filters.callback_data import CallbackData
 
-
-from lombardis.schemas import ClientLoansResponse, LoanDetailsResponse
 from lombardis.api import LombardisAPI
 
 from repository.dto import UserDTO
@@ -23,6 +24,10 @@ from .text_constants import (
     PAYLOAN_SELECTION_MESSAGE,
     RUB,
 )
+
+
+class LoansCallback(CallbackData, prefix="loans"):
+    loan_id: UUID
 
 
 class LoanDetailsMode(StatesGroup):
@@ -47,7 +52,7 @@ async def loans_menu_handler(message: Message, state: FSMContext, users: UsersRe
     for loan in client_loans.Loans:
         keyboard.button(
             text=f"{loan.pawnBillNumber}",
-            callback_data=f"loan_{loan.LoanID}",
+            callback_data=LoansCallback(loan_id=loan.LoanID),
         )
     keyboard.adjust(2)
 
@@ -55,9 +60,11 @@ async def loans_menu_handler(message: Message, state: FSMContext, users: UsersRe
     await state.set_state(LoanDetailsMode.as_new)
 
 
-@router.callback_query(lambda c: c.data.startswith("loan_"), LoanDetailsMode.as_editing)
-async def view_loans_as_editing(callback: CallbackQuery, state: FSMContext) -> None:
-    loan_id = callback.data.split("_")[1]
+@router.callback_query(LoansCallback.filter(), LoanDetailsMode.as_editing)
+async def view_loans_as_editing(
+    callback: CallbackQuery, callback_data: LoansCallback, state: FSMContext
+) -> None:
+    loan_id = str(callback_data.loan_id)
     loan_details = await LombardisAPI().get_loan_details(loan_id)
 
     keyboard = InlineKeyboardBuilder()
@@ -80,9 +87,11 @@ async def view_loans_as_editing(callback: CallbackQuery, state: FSMContext) -> N
         await callback.answer()
 
 
-@router.callback_query(lambda c: c.data.startswith("loan_"), LoanDetailsMode.as_new)
-async def view_loan_as_new_message(callback: CallbackQuery, state: FSMContext) -> None:
-    loan_id = callback.data.split("_")[1]
+@router.callback_query(LoansCallback.filter(), LoanDetailsMode.as_new)
+async def view_loan_as_new_message(
+    callback: CallbackQuery, callback_data: LoansCallback, state: FSMContext
+) -> None:
+    loan_id = str(callback_data.loan_id)
     loan_details = await LombardisAPI().get_loan_details(loan_id)
 
     keyboard = InlineKeyboardBuilder()
