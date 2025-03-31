@@ -8,4 +8,7 @@ up:
 down:
 	docker compose down
 
-.PHONY: clean, up, down
+black:
+	black .
+
+.PHONY: clean, up, down, black
