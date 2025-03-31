@@ -5,10 +5,10 @@ from pydantic import ValidationError
 
 from lombardis.schemas import (
     ClientListResponse,
-    ClientLoanResponse,
+    ClientLoansResponse,
     ClientDetailsResponse,
     Loan,
-    LoanDetails,
+    LoanDetailsResponse,
 )
 from logger import logfire
 from config import conf
@@ -49,7 +49,7 @@ class LombardisAPI:
                 except Exception as e:
                     logfire.exception(f"Unexpected Error: {e}")
 
-    async def get_client_loans(self, client_id: str) -> list[Loan]:
+    async def get_client_loans(self, client_id: str) -> ClientLoansResponse:
         with logfire.span(f"fetching client loans cliend_id={client_id}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
@@ -62,7 +62,7 @@ class LombardisAPI:
                         raw_data = await response.read()
                         json_data = json.loads(raw_data.decode("utf-8"))
                         try:
-                            loan_resp = ClientLoanResponse(**json_data)
+                            loan_resp = ClientLoansResponse(**json_data)
                             logfire.info(
                                 f"success fetch loans count={len(loan_resp.Loans)}"
                             )
@@ -105,7 +105,7 @@ class LombardisAPI:
                 except Exception as e:
                     logfire.exception(f"Unexpected Error: {e}")
 
-    async def get_loan_details(self, loan_id: str) -> LoanDetails:
+    async def get_loan_details(self, loan_id: str) -> LoanDetailsResponse:
         """Fetches loan details for a given loan ID."""
         with logfire.span(f"fetching loan details loan_id={loan_id}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
@@ -118,7 +118,7 @@ class LombardisAPI:
                         response.raise_for_status()
                         raw_data = await response.read()
                         json_data = json.loads(raw_data.decode("utf-8"))
-                        loan_details = LoanDetails(**json_data)
+                        loan_details = LoanDetailsResponse(**json_data)
                         logfire.info(f"success fetch loan details loan_id={loan_id}")
                         return loan_details
                 except ValidationError as e:

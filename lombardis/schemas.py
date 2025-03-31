@@ -47,7 +47,7 @@ class Loan:
 
 
 @dataclass
-class ClientLoanResponse:
+class ClientLoansResponse:
     taskStatus: int
     dataToProcess: int
     dataProcessed: int
@@ -100,7 +100,7 @@ class StuffItem:
 
 
 @dataclass
-class LoanDetails:
+class LoanDetailsResponse:
     taskStatus: int
     dataToProcess: int
     dataProcessed: int
