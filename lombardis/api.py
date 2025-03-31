@@ -15,7 +15,7 @@ from config import conf
 
 
 class LombardisAPI:
-    BASE_URL = "SKIPPED"
+    BASE_URL = conf["LOMBARDIS_URL"]
 
     def __init__(
         self,
