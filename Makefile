@@ -10,5 +10,6 @@ down:
 
 black:
 	black .
+	python -m isort .
 
 .PHONY: clean, up, down, black
