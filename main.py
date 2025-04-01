@@ -2,11 +2,10 @@ import asyncio
 
 from aiohttp import web
 
-from repository.clients import fetch_and_update_local_db
 from repository.users import UsersRepo
 
-from telegram.webhook import get_webhook_app
 from telegram.handlers import commands_menu
+from telegram.webhook import get_webhook_app
 from telegram.bot import get_dispatcher
 
 from config import conf
@@ -17,7 +16,6 @@ users = UsersRepo()
 async def init(bot):
     await asyncio.gather(
         users.bootstrap(),
-        fetch_and_update_local_db(),
         commands_menu.set_bot_commands(bot),
     )
 

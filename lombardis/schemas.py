@@ -5,6 +5,16 @@ from uuid import UUID
 
 
 @dataclass
+class ClientIDRequest:
+    queryString: str
+
+
+@dataclass
+class ClientIDResponse:
+    ClientID: str
+
+
+@dataclass
 class Client:
     ClientID: UUID
     PhoneNumber: str
@@ -75,13 +85,15 @@ class ClientDetailsResponse:
     errorMessage: str
     providerID: str
     taskID: UUID
+    clientInternalCode: str
     surname: str
     name: str
     patronymic: Optional[str]
     email: Optional[str]
     phone: str
     taxNumber: Optional[str]
-    AdditionalInformation: List[str]
+    additionalInformation: List[str]
+    segments: List[str]
 
 
 @dataclass
