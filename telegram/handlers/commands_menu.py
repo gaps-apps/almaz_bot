@@ -1,7 +1,7 @@
 from aiogram import Bot
 from aiogram.types import BotCommand
 
-from .text_constants import START_COMMAND_DESCRIPTION
+from .text_constants import HELP_COMMAND_DESCRIPTION, START_COMMAND_DESCRIPTION
 
 
 async def set_bot_commands(bot: Bot) -> None:

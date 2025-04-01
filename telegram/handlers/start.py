@@ -1,10 +1,13 @@
 from aiogram import Router, F
 from aiogram.filters import CommandStart
+from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.utils.markdown import hitalic
+
+from aiogram_calendar import DialogCalendar, DialogCalendarCallback, get_user_locale
 
 from lombardis.api import LombardisAPI
 
@@ -17,7 +20,6 @@ from .text_constants import (
     AUTH_NEEDED,
     BIRTHDAY_PLEASE,
     CLIENT_NOT_FOUND,
-    HELP_INSTRUCTIONS,
     INVALID_LOAN_MESSAGE,
     LOAN_NUMBER_PLEASE,
     LOANS_MENU_TEXT,
@@ -43,9 +45,13 @@ async def command_start_handler(
         AuthState.waiting_for_loan_number,
     ]:
         if not await users.user_exists(message.from_user.id):
-            await message.answer(HELP_INSTRUCTIONS)
             await message.answer(AUTH_NEEDED)
-            await message.answer(BIRTHDAY_PLEASE)
+            await message.answer(
+                BIRTHDAY_PLEASE,
+                reply_markup=await DialogCalendar(
+                    locale=await get_user_locale(message.from_user)
+                ).start_calendar(1989),
+            )
             await state.set_state(AuthState.waiting_for_birthday)
         else:
             keyboard = ReplyKeyboardBuilder()
@@ -64,10 +70,6 @@ async def birthday_handler(message: Message, state: FSMContext) -> None:
     if not message.text.isdigit() or len(message.text) != 8:
         await message.answer(INVALID_BIRTHDAY_MESSAGE)
         return
-
-    await state.update_data(birthday=message.text)
-    await message.answer(LOAN_NUMBER_PLEASE)
-    await state.set_state(AuthState.waiting_for_loan_number)
 
 
 @router.message(AuthState.waiting_for_loan_number, F.text)
@@ -109,3 +111,17 @@ async def loan_number_handler(
         GREETINGS.format(full_name=f"{hitalic(user.full_name)}"),
         reply_markup=keyboard.as_markup(resize_keyboard=True),
     )
+
+
+@router.callback_query(AuthState.waiting_for_birthday, DialogCalendarCallback.filter())
+async def process_dialog_calendar(
+    callback_query: CallbackQuery, callback_data: CallbackData, state: FSMContext
+):
+    selected, date = await DialogCalendar(
+        locale=await get_user_locale(callback_query.from_user)
+    ).process_selection(callback_query, callback_data)
+    if selected:
+        await callback_query.message.answer(date.strftime("%Y%m%d"))
+        await state.update_data(birthday=date.strftime("%Y%m%d"))
+        await callback_query.message.answer(LOAN_NUMBER_PLEASE)
+        await state.set_state(AuthState.waiting_for_loan_number)
