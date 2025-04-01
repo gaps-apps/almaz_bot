@@ -1,16 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
-
-
-@dataclass
-class ClientDebtDTO:
-    client_id: str
-    phone_number: str
-    full_debt: float
-    full_interest_debt: float
-    overdue_debt: float
-    overdue_interest_debt: float
-    nearest_payment_date: Optional[str]
 
 
 @dataclass
