@@ -1,11 +1,10 @@
 from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
-
+from aiogram.enums import ParseMode
 
 from config import conf
 
-from .handlers import start_router, loans_router
+from .handlers import loans_router, start_router
 
 
 def get_dispatcher() -> tuple[Dispatcher, Bot]:

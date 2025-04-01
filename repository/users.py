@@ -1,5 +1,6 @@
+from typing import Dict, Optional
+
 import aiosqlite
-from typing import Optional, Dict
 
 from config import conf
 

@@ -1,7 +1,8 @@
-from pydantic.dataclasses import dataclass
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 from uuid import UUID
+
+from pydantic.dataclasses import dataclass
 
 
 @dataclass

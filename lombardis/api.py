@@ -3,15 +3,11 @@ import json
 import aiohttp
 from pydantic import ValidationError
 
-from lombardis.schemas import (
-    ClientIDResponse,
-    ClientListResponse,
-    ClientLoansResponse,
-    ClientDetailsResponse,
-    LoanDetailsResponse,
-)
-from logger import logfire
 from config import conf
+from logger import logfire
+from lombardis.schemas import (ClientDetailsResponse, ClientIDResponse,
+                               ClientListResponse, ClientLoansResponse,
+                               LoanDetailsResponse)
 
 
 class LombardisAPI:

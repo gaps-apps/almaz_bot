@@ -1,14 +1,13 @@
 import hashlib
 import random
 
+from aiogram import Bot, Dispatcher
+from aiogram.webhook.aiohttp_server import (SimpleRequestHandler,
+                                            setup_application)
 from aiohttp import web
 
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiogram import Bot, Dispatcher
-
-from logger import logfire
 from config import conf
-
+from logger import logfire
 
 BASE_WEBHOOK_URL = conf["WEBHOOK_BASE"]
 WEBHOOK_PATH = "/webhook"

@@ -2,13 +2,11 @@ import asyncio
 
 from aiohttp import web
 
+from config import conf
 from repository.users import UsersRepo
-
+from telegram.bot import get_dispatcher
 from telegram.handlers import commands_menu
 from telegram.webhook import get_webhook_app
-from telegram.bot import get_dispatcher
-
-from config import conf
 
 users = UsersRepo()
 

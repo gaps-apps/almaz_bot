@@ -1,31 +1,23 @@
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.utils.markdown import hitalic
-
-from aiogram_calendar import DialogCalendar, DialogCalendarCallback, get_user_locale
+from aiogram_calendar import (DialogCalendar, DialogCalendarCallback,
+                              get_user_locale)
 
 from lombardis.api import LombardisAPI
-
 from repository.dto import UserDTO
 from repository.users import UsersRepo
 
 from .helpers import replace_english_with_russian
-
-from .text_constants import (
-    AUTH_NEEDED,
-    BIRTHDAY_PLEASE,
-    CLIENT_NOT_FOUND,
-    INVALID_LOAN_MESSAGE,
-    LOAN_NUMBER_PLEASE,
-    LOANS_MENU_TEXT,
-    INVALID_BIRTHDAY_MESSAGE,
-    GREETINGS,
-)
+from .text_constants import (AUTH_NEEDED, BIRTHDAY_PLEASE, CLIENT_NOT_FOUND,
+                             GREETINGS, INVALID_BIRTHDAY_MESSAGE,
+                             INVALID_LOAN_MESSAGE, LOAN_NUMBER_PLEASE,
+                             LOANS_MENU_TEXT)
 
 
 class AuthState(StatesGroup):

@@ -1,29 +1,20 @@
 from uuid import UUID
 
-from aiogram import Router, F
-
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import Message, CallbackQuery
-
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.utils.markdown import hbold, hitalic
+from aiogram import F, Router
+from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.filters.callback_data import CallbackData
+from aiogram.types import CallbackQuery, Message
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.markdown import hbold, hitalic
 
 from lombardis.api import LombardisAPI
-
 from repository.dto import UserDTO
 from repository.users import UsersRepo
 
-from .text_constants import (
-    LOANS_MENU_TEXT,
-    NO_ACTIVE_LOANS,
-    PAWN_TICKET_HEADER,
-    PAY_LOAN_BUTTON,
-    PAYLOAN_SELECTION_MESSAGE,
-    RUB,
-)
+from .text_constants import (LOANS_MENU_TEXT, NO_ACTIVE_LOANS,
+                             PAWN_TICKET_HEADER, PAY_LOAN_BUTTON,
+                             PAYLOAN_SELECTION_MESSAGE, RUB)
 
 
 class LoansCallback(CallbackData, prefix="loans"):

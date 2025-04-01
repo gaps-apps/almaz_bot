@@ -1,6 +1,7 @@
 import os
-from logger import logfire
 from typing import TypedDict
+
+from logger import logfire
 
 
 class Config(TypedDict):
