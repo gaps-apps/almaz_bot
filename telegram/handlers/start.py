@@ -36,8 +36,6 @@ async def command_start_handler(
 ) -> None:
     assert message.from_user is not None
 
-    logfire.info(f"starting bot for {message.from_user.full_name}")
-
     if await state.get_state() not in [
         AuthState.waiting_for_birthday,
         AuthState.waiting_for_loan_number,
