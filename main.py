@@ -32,7 +32,7 @@ if __name__ == "__main__":
     else:
         # webhook mode
         web.run_app(
-            get_webhook_app(dp, bot),
+            get_webhook_app(dp, bot, users),
             host=conf["WEB_SERVER_HOST"],
             port=int(conf["WEB_SERVER_PORT"]),
         )

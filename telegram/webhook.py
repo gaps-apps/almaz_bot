@@ -8,6 +8,7 @@ from aiohttp import web
 
 from config import conf
 from logger import logfire
+from repository.users import UsersRepo
 
 BASE_WEBHOOK_URL = conf["WEBHOOK_BASE"]
 WEBHOOK_PATH = "/webhook"
@@ -28,7 +29,7 @@ async def on_shutdown(bot: Bot) -> None:
     logfire.info(WEBHOOK_DELETED)
 
 
-def get_webhook_app(dp: Dispatcher, bot: Bot) -> web.Application:
+def get_webhook_app(dp: Dispatcher, bot: Bot, users: UsersRepo) -> web.Application:
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
@@ -36,6 +37,7 @@ def get_webhook_app(dp: Dispatcher, bot: Bot) -> web.Application:
     webhook_requests_handler = SimpleRequestHandler(
         dispatcher=dp,
         bot=bot,
+        users=users,
         secret_token=WEBHOOK_SECRET,
     )
     webhook_requests_handler.register(app, path=WEBHOOK_PATH)
