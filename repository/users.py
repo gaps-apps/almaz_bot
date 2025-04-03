@@ -19,7 +19,7 @@ class UsersRepoProtocol(Protocol):
 
     async def user_exists(self, chat_id: int) -> bool: ...
 
-    async def add_user(self, user: UserDTO) -> Optional[UserDTO]: ...
+    async def add_user(self, user: UserDTO) -> None: ...
 
     async def get_user(self, params: Dict[str, Any]) -> Optional[UserDTO]: ...
 
@@ -37,7 +37,7 @@ class UsersRepo:
             if self.connection is None:
                 self.connection = await aiosqlite.connect(self.db_name)
         except Exception:
-            logfire.exception("Failed to connect to database")
+            logfire.exception("Failed to connect to sqlite database")
             raise
 
     async def close(self) -> None:
@@ -47,7 +47,7 @@ class UsersRepo:
                 await self.connection.close()
                 self.connection = None
         except Exception:
-            logfire.exception("Failed to close database connection")
+            logfire.exception("Failed to close sqlite database connection")
             raise
 
     async def bootstrap(self) -> None:
@@ -67,7 +67,7 @@ class UsersRepo:
             )
             await self.connection.commit()
         except Exception:
-            logfire.exception("Failed to bootstrap database")
+            logfire.exception("Failed to bootstrap sqlite database tables")
             raise
 
     async def user_exists(self, chat_id: int) -> bool:
@@ -84,7 +84,7 @@ class UsersRepo:
             logfire.exception("Failed to check user existence")
             raise
 
-    async def add_user(self, user: UserDTO) -> Optional[UserDTO]:
+    async def add_user(self, user: UserDTO) -> None:
         """Adds a new user to the database."""
         try:
             await self.connect()
@@ -97,9 +97,8 @@ class UsersRepo:
                 (user.chat_id, user.full_name, user.client_id, user.phone_number),
             )
             await self.connection.commit()
-            return user
         except Exception:
-            logfire.exception("Failed to add user")
+            logfire.exception("Failed to add userto sqlite database")
             raise
 
     async def get_user(self, params: Dict[str, Any]) -> Optional[UserDTO]:
@@ -127,5 +126,5 @@ class UsersRepo:
             logfire.warning("User not found", params=params)
             return None
         except Exception:
-            logfire.exception("Failed to fetch user")
+            logfire.exception("Failed to fetch user from sqlite database")
             raise
