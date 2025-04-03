@@ -33,6 +33,7 @@ router = Router()
 async def loans_menu_handler(
     message: Message, state: FSMContext, users: UsersRepo
 ) -> None:
+
     user = await users.get_user({"chat_id": message.chat.id})
     if user is None:
         logfire.error(f"User with chat_id {message.chat.id} not found in database.")
@@ -41,7 +42,7 @@ async def loans_menu_handler(
     client_loans = await LombardisAPI().get_client_loans(user.client_id)
 
     if client_loans is None:
-        logfire.error("Failed to retrieve client loans")
+        logfire.error("Failed to retrieve client loans.")
         return
 
     if not client_loans.Loans:
@@ -64,6 +65,9 @@ async def loans_menu_handler(
 async def view_loans_as_editing(
     callback: CallbackQuery, callback_data: LoansCallback, state: FSMContext
 ) -> None:
+    assert callback.bot is not None
+    assert callback.message is not None
+
     loan_id = str(callback_data.loan_id)
     loan_details = await LombardisAPI().get_loan_details(loan_id)
     if loan_details is None:
@@ -74,17 +78,10 @@ async def view_loans_as_editing(
     keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
 
     state_data = await state.get_data()
+
     message_id = state_data.get("loan_details_message_id")
     if message_id is None:
         logfire.error("Missing loan_details_message_id in state data.")
-        return
-
-    if callback.message is None:
-        logfire.error("Callback message is missing.")
-        return
-
-    if callback.bot is None:
-        logfire.error("No bot object")
         return
 
     try:
@@ -106,6 +103,8 @@ async def view_loans_as_editing(
 async def view_loan_as_new_message(
     callback: CallbackQuery, callback_data: LoansCallback, state: FSMContext
 ) -> None:
+    assert callback.message is not None
+
     loan_id = str(callback_data.loan_id)
     loan_details = await LombardisAPI().get_loan_details(loan_id)
     if loan_details is None:
@@ -114,10 +113,6 @@ async def view_loan_as_new_message(
 
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
-
-    if callback.message is None:
-        logfire.error("Callback message is missing.")
-        return
 
     try:
         sent_message = await callback.message.answer(
@@ -136,15 +131,10 @@ async def view_loan_as_new_message(
 
 @router.callback_query(lambda c: c.data.startswith("pay_"))
 async def process_loan_payment_callback(callback: CallbackQuery) -> None:
-    if callback.data is None:
-        logfire.error("Callback data is missing.")
-        return
+    assert callback.data is not None
+    assert callback.message is not None
 
     loan_id = callback.data.split("_")[1]
-
-    if callback.message is None:
-        logfire.error("Callback message is missing.")
-        return
 
     await callback.message.answer(PAYLOAN_SELECTION_MESSAGE.format(loan_id=loan_id))
     await callback.answer()
