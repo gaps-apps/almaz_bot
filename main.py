@@ -1,5 +1,6 @@
 import asyncio
 
+from aiogram import Bot
 from aiohttp import web
 
 from config import conf
@@ -11,7 +12,7 @@ from telegram.webhook import get_webhook_app
 users = UsersRepo()
 
 
-async def init(bot):
+async def init(bot: Bot) -> None:
     await asyncio.gather(
         users.bootstrap(),
         commands_menu.set_bot_commands(bot),

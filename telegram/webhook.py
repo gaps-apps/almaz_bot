@@ -28,7 +28,7 @@ async def on_shutdown(bot: Bot) -> None:
     logfire.info(WEBHOOK_DELETED)
 
 
-def get_webhook_app(dp: Dispatcher, bot: Bot):
+def get_webhook_app(dp: Dispatcher, bot: Bot) -> web.Application:
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 

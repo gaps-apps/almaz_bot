@@ -1,7 +1,5 @@
 import os
-from typing import TypedDict
-
-from logger import logfire
+from typing import TypedDict, cast
 
 
 class Config(TypedDict):
@@ -21,9 +19,8 @@ class Config(TypedDict):
 
 def get_from_env() -> Config:
     try:
-        return {
-            var: os.environ[var] for var in Config.__annotations__
-        }  # Ensures values are non-None
+        return cast(
+            Config, {var: os.environ[var] for var in Config.__annotations__}
+        )  # Ensures values are non-None
     except KeyError as e:
-        logfire.error(f"Missing env var: {e}")
         exit(1)

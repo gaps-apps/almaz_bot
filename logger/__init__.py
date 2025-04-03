@@ -1,3 +1,3 @@
 from .configure import logfire
 
-__all__ = [logfire]
+__all__ = ["logfire"]

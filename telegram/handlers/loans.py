@@ -1,5 +1,7 @@
+from typing import Optional
 from uuid import UUID
 
+import logfire
 from aiogram import F, Router
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
@@ -30,11 +32,18 @@ router = Router()
 
 
 @router.message(F.text == LOANS_MENU_TEXT)
-async def loans_menu_handler(message: Message, state: FSMContext, users: UsersRepo):
-    user = await users.get_user_by_params({"chat_id": message.chat.id})
-    user: UserDTO
+async def loans_menu_handler(message: Message, state: FSMContext, users: UsersRepo) -> None:
+    user = await users.get_user({"chat_id": message.chat.id})
+    if user is None:
+        logfire.error(f"User with chat_id {message.chat.id} not found in database.")
+        return
 
     client_loans = await LombardisAPI().get_client_loans(user.client_id)
+
+    if client_loans is None:
+        logfire.error(f"Failed to retrieve client loans")
+        return
+
     if not client_loans.Loans:
         await message.answer(NO_ACTIVE_LOANS)
         return
@@ -57,12 +66,27 @@ async def view_loans_as_editing(
 ) -> None:
     loan_id = str(callback_data.loan_id)
     loan_details = await LombardisAPI().get_loan_details(loan_id)
+    if loan_details is None:
+        logfire.error(f"Failed to retrieve loan details for loan_id {loan_id}.")
+        return
 
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
 
     state_data = await state.get_data()
     message_id = state_data.get("loan_details_message_id")
+    if message_id is None:
+        logfire.error("Missing loan_details_message_id in state data.")
+        return
+
+    if callback.message is None:
+        logfire.error("Callback message is missing.")
+        return
+
+    if callback.bot is None:
+        logfire.error("No bot object")
+        return
+
     try:
         await callback.bot.edit_message_text(
             text="\n".join(
@@ -84,9 +108,17 @@ async def view_loan_as_new_message(
 ) -> None:
     loan_id = str(callback_data.loan_id)
     loan_details = await LombardisAPI().get_loan_details(loan_id)
+    if loan_details is None:
+        logfire.error(f"Failed to retrieve loan details for loan_id {loan_id}.")
+        return
 
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
+
+    if callback.message is None:
+        logfire.error("Callback message is missing.")
+        return
+
     try:
         sent_message = await callback.message.answer(
             text="\n".join(
@@ -104,6 +136,15 @@ async def view_loan_as_new_message(
 
 @router.callback_query(lambda c: c.data.startswith("pay_"))
 async def process_loan_payment_callback(callback: CallbackQuery) -> None:
+    if callback.data is None:
+        logfire.error("Callback data is missing.")
+        return
+
     loan_id = callback.data.split("_")[1]
+
+    if callback.message is None:
+        logfire.error("Callback message is missing.")
+        return
+
     await callback.message.answer(PAYLOAN_SELECTION_MESSAGE.format(loan_id=loan_id))
     await callback.answer()
