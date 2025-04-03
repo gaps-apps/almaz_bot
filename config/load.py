@@ -22,5 +22,5 @@ def get_from_env() -> Config:
         return cast(
             Config, {var: os.environ[var] for var in Config.__annotations__}
         )  # Ensures values are non-None
-    except KeyError as e:
+    except KeyError:
         exit(1)

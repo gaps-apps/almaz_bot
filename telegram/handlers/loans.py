@@ -41,7 +41,7 @@ async def loans_menu_handler(
     client_loans = await LombardisAPI().get_client_loans(user.client_id)
 
     if client_loans is None:
-        logfire.error(f"Failed to retrieve client loans")
+        logfire.error("Failed to retrieve client loans")
         return
 
     if not client_loans.Loans:

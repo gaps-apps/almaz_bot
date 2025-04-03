@@ -17,10 +17,9 @@ from repository.dto import UserDTO
 from repository.users import UsersRepo
 
 from .helpers import replace_english_with_russian
-from .text_constants import (AUTH_NEEDED, BIRTHDAY_PLEASE, CLIENT_NOT_FOUND,
-                             GREETINGS, INVALID_BIRTHDAY_MESSAGE,
-                             INVALID_LOAN_MESSAGE, LOAN_NUMBER_PLEASE,
-                             LOANS_MENU_TEXT)
+from .text_constants import (AUTH_NEEDED, BIRTHDAY_PLEASE, GREETINGS,
+                             INVALID_BIRTHDAY_MESSAGE, INVALID_LOAN_MESSAGE,
+                             LOAN_NUMBER_PLEASE, LOANS_MENU_TEXT)
 
 
 class AuthState(StatesGroup):
