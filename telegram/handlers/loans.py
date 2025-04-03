@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 import logfire
@@ -11,7 +10,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.utils.markdown import hbold, hitalic
 
 from lombardis.api import LombardisAPI
-from repository.dto import UserDTO
 from repository.users import UsersRepo
 
 from .text_constants import (LOANS_MENU_TEXT, NO_ACTIVE_LOANS,
@@ -32,7 +30,9 @@ router = Router()
 
 
 @router.message(F.text == LOANS_MENU_TEXT)
-async def loans_menu_handler(message: Message, state: FSMContext, users: UsersRepo) -> None:
+async def loans_menu_handler(
+    message: Message, state: FSMContext, users: UsersRepo
+) -> None:
     user = await users.get_user({"chat_id": message.chat.id})
     if user is None:
         logfire.error(f"User with chat_id {message.chat.id} not found in database.")
