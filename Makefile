@@ -12,4 +12,8 @@ black:
 	black .
 	python -m isort .
 
-.PHONY: clean, up, down, black
+check:
+	ruff check
+	python -m mypy .
+
+.PHONY: clean, up, down, black, check
