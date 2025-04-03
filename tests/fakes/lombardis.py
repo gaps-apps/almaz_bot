@@ -1,3 +1,4 @@
+import random
 import uuid
 from datetime import datetime, timedelta
 
@@ -5,7 +6,11 @@ from lombardis.schemas import (ClientDetailsResponse, ClientIDResponse,
                                ClientLoansResponse, Loan, LoanDetailsResponse,
                                StuffItem)
 
-CLIENT_ID = uuid.uuid4()
+
+def get_random_phone_number() -> str:
+    return f"+1{random.randint(1000000000, 9999999999)}"
+
+
 LOANS = [
     Loan(
         LoanID=uuid.uuid4(),
@@ -135,7 +140,7 @@ class LombardisAPIFake:
             name="Иван",
             patronymic="Иванович",
             email="ivanov@example.com",
-            phone="+1234567890",
+            phone=get_random_phone_number(),
             taxNumber="1234567890",
             additionalInformation=["VIP клиент"],
             segments=["A"],
@@ -161,4 +166,4 @@ class LombardisAPIFake:
         return LOAN_DETAILS.get(loan_id)
 
     async def get_client_id(self, query_string: str) -> str:
-        return str(ClientIDResponse(ClientID=CLIENT_ID).ClientID)
+        return str(ClientIDResponse(ClientID=uuid.uuid4()).ClientID)

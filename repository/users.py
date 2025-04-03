@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional, Protocol
 
 import aiosqlite
+import logfire
 
 from config import conf
 
@@ -32,72 +33,99 @@ class UsersRepo:
 
     async def connect(self) -> None:
         """Establishes a shared database connection."""
-        if self.connection is None:
-            self.connection = await aiosqlite.connect(self.db_name)
+        try:
+            if self.connection is None:
+                self.connection = await aiosqlite.connect(self.db_name)
+        except Exception:
+            logfire.exception("Failed to connect to database")
+            raise
 
     async def close(self) -> None:
         """Closes the shared database connection."""
-        if self.connection:
-            await self.connection.close()
-            self.connection = None
+        try:
+            if self.connection:
+                await self.connection.close()
+                self.connection = None
+        except Exception:
+            logfire.exception("Failed to close database connection")
+            raise
 
     async def bootstrap(self) -> None:
         """Creates the users table if it does not exist."""
-        await self.connect()
-        assert self.connection is not None
-        await self.connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS users (
-                chat_id INTEGER PRIMARY KEY,
-                full_name TEXT NOT NULL,
-                client_id TEXT NOT NULL UNIQUE,
-                phone_number TEXT NOT NULL UNIQUE
+        try:
+            await self.connect()
+            assert self.connection is not None
+            await self.connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    chat_id INTEGER PRIMARY KEY,
+                    full_name TEXT NOT NULL,
+                    client_id TEXT NOT NULL UNIQUE,
+                    phone_number TEXT NOT NULL UNIQUE
+                )
+                """
             )
-            """
-        )
-        await self.connection.commit()
+            await self.connection.commit()
+        except Exception:
+            logfire.exception("Failed to bootstrap database")
+            raise
 
     async def user_exists(self, chat_id: int) -> bool:
         """Checks if a user with the given chat_id exists in the database."""
-        await self.connect()
-        assert self.connection is not None
-        async with self.connection.execute(
-            "SELECT 1 FROM users WHERE chat_id = ?", (chat_id,)
-        ) as cursor:
-            return await cursor.fetchone() is not None
+        try:
+            await self.connect()
+            assert self.connection is not None
+            async with self.connection.execute(
+                "SELECT 1 FROM users WHERE chat_id = ?", (chat_id,)
+            ) as cursor:
+                exists = await cursor.fetchone() is not None
+                return exists
+        except Exception:
+            logfire.exception("Failed to check user existence")
+            raise
 
     async def add_user(self, user: UserDTO) -> Optional[UserDTO]:
         """Adds a new user to the database."""
-        await self.connect()
-        assert self.connection is not None
-        await self.connection.execute(
-            """
-            INSERT INTO users (chat_id, full_name, client_id, phone_number)
-            VALUES (?, ?, ?, ?)
-            """,
-            (user.chat_id, user.full_name, user.client_id, user.phone_number),
-        )
-        await self.connection.commit()
-        return user
+        try:
+            await self.connect()
+            assert self.connection is not None
+            await self.connection.execute(
+                """
+                INSERT INTO users (chat_id, full_name, client_id, phone_number)
+                VALUES (?, ?, ?, ?)
+                """,
+                (user.chat_id, user.full_name, user.client_id, user.phone_number),
+            )
+            await self.connection.commit()
+            return user
+        except Exception:
+            logfire.exception("Failed to add user")
+            raise
 
     async def get_user(self, params: Dict[str, Any]) -> Optional[UserDTO]:
         """Fetches a user by given parameters."""
-        if not params:
-            raise ValueError("At least one parameter must be provided.")
+        try:
+            if not params:
+                raise ValueError("At least one parameter must be provided.")
 
-        await self.connect()
-        assert self.connection is not None
-        conditions = " AND ".join([f"{key} = ?" for key in params.keys()])
-        values = tuple(params.values())
-        query = f"SELECT chat_id, full_name, client_id, phone_number FROM users WHERE {conditions}"
+            await self.connect()
+            assert self.connection is not None
+            conditions = " AND ".join([f"{key} = ?" for key in params.keys()])
+            values = tuple(params.values())
+            query = f"SELECT chat_id, full_name, client_id, phone_number FROM users WHERE {conditions}"
 
-        async with self.connection.execute(query, values) as cursor:
-            row = await cursor.fetchone()
-            if row:
-                return UserDTO(
-                    chat_id=row[0],
-                    full_name=row[1],
-                    client_id=row[2],
-                    phone_number=row[3],
-                )
+            async with self.connection.execute(query, values) as cursor:
+                row = await cursor.fetchone()
+                if row:
+                    user = UserDTO(
+                        chat_id=row[0],
+                        full_name=row[1],
+                        client_id=row[2],
+                        phone_number=row[3],
+                    )
+                    return user
+            logfire.warning("User not found", params=params)
             return None
+        except Exception:
+            logfire.exception("Failed to fetch user")
+            raise
