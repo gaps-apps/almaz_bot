@@ -12,9 +12,9 @@ from aiogram.utils.markdown import hitalic
 from aiogram_calendar import (DialogCalendar, DialogCalendarCallback,
                               get_user_locale)
 
-from lombardis.api import LombardisAPI
+from lombardis.api import LombardisAPIProtocol
 from repository.dto import UserDTO
-from repository.users import UsersRepo
+from repository.users import UsersRepoProtocol
 
 from .helpers import replace_english_with_russian
 from .text_constants import (AUTH_NEEDED, BIRTHDAY_PLEASE, GREETINGS,
@@ -32,7 +32,7 @@ router = Router()
 
 @router.message(CommandStart())
 async def command_start_handler(
-    message: Message, state: FSMContext, users: UsersRepo
+    message: Message, state: FSMContext, users: UsersRepoProtocol
 ) -> None:
     assert message.from_user is not None
 
@@ -84,7 +84,10 @@ async def birthday_handler(message: Message, state: FSMContext) -> None:
 
 @router.message(AuthState.waiting_for_loan_number, F.text)
 async def loan_number_handler(
-    message: Message, state: FSMContext, users: UsersRepo
+    message: Message,
+    state: FSMContext,
+    users: UsersRepoProtocol,
+    lombardis: LombardisAPIProtocol,
 ) -> None:
     assert message.text is not None
     assert message.from_user is not None
@@ -101,7 +104,7 @@ async def loan_number_handler(
         await message.answer(INVALID_LOAN_MESSAGE)
         return
 
-    client_id = await LombardisAPI().get_client_id(f"{birthday} {loan_number}")
+    client_id = await lombardis.get_client_id(f"{birthday} {loan_number}")
 
     if client_id is None:
         logfire.warning(
@@ -110,7 +113,7 @@ async def loan_number_handler(
         await state.clear()
         return
 
-    client_details = await LombardisAPI().get_client_details(client_id)
+    client_details = await lombardis.get_client_details(client_id)
     if client_details is None:
         logfire.error(f"Failed to retrieve client details for client_id {client_id}.")
         return

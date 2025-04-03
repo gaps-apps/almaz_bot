@@ -15,6 +15,7 @@ class Config(TypedDict):
     USERS_DB: str
     LOMBARDIS_DB: str
     LOMBARDIS_URL: str
+    DEMO_MODE: str
 
 
 def get_from_env() -> Config:

@@ -1,4 +1,5 @@
 import json
+from typing import Protocol
 
 import aiohttp
 from pydantic import ValidationError
@@ -6,8 +7,19 @@ from pydantic import ValidationError
 from config import conf
 from logger import logfire
 from lombardis.schemas import (ClientDetailsResponse, ClientIDResponse,
-                               ClientListResponse, ClientLoansResponse,
-                               LoanDetailsResponse)
+                               ClientLoansResponse, LoanDetailsResponse)
+
+
+class LombardisAPIProtocol(Protocol):
+    async def get_client_loans(self, client_id: str) -> ClientLoansResponse | None: ...
+
+    async def get_client_details(
+        self, client_id: str
+    ) -> ClientDetailsResponse | None: ...
+
+    async def get_loan_details(self, loan_id: str) -> LoanDetailsResponse | None: ...
+
+    async def get_client_id(self, query_string: str) -> str | None: ...
 
 
 class LombardisAPI:
@@ -19,32 +31,6 @@ class LombardisAPI:
         password: str = conf["LOMBARDIS_PASSWORD"],
     ):
         self.auth = aiohttp.BasicAuth(username, password)
-
-    async def fetch_clients_list(self) -> ClientListResponse | None:
-        with logfire.span("fetching clients list"):
-            async with aiohttp.ClientSession(auth=self.auth) as session:
-                try:
-                    async with session.put(
-                        self.BASE_URL + "getClientsList"
-                    ) as response:
-                        response.raise_for_status()
-                        raw_data = await response.read()
-                        json_data = json.loads(raw_data.decode("utf-8"))
-                        try:
-                            clients_resp = ClientListResponse(**json_data)
-                            logfire.info(
-                                f"success fetch clients count={len(clients_resp.ClientsList)}"
-                            )
-                            return clients_resp
-                        except ValidationError as e:
-                            logfire.exception(f"Validation Error: {e}")
-                except aiohttp.ClientResponseError as e:
-                    logfire.exception(f"HTTP Error: {e.status} - {e.message}")
-                except aiohttp.ClientError as e:
-                    logfire.exception(f"Request Error: {e}")
-                except Exception as e:
-                    logfire.exception(f"Unexpected Error: {e}")
-            return None
 
     async def get_client_loans(self, client_id: str) -> ClientLoansResponse | None:
         with logfire.span(f"fetching client loans cliend_id={client_id}"):
@@ -149,7 +135,7 @@ class LombardisAPI:
                         logfire.info(
                             f"success fetching ClientID={client_resp.ClientID}"
                         )
-                        return client_resp.ClientID
+                        return str(client_resp.ClientID)
                 except ValidationError as e:
                     logfire.exception(f"Validation Error: {e}")
                 except aiohttp.ClientResponseError as e:

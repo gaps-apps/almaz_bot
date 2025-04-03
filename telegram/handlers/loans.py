@@ -9,8 +9,8 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.utils.markdown import hbold, hitalic
 
-from lombardis.api import LombardisAPI
-from repository.users import UsersRepo
+from lombardis.api import LombardisAPIProtocol
+from repository.users import UsersRepoProtocol
 
 from .text_constants import (LOANS_MENU_TEXT, NO_ACTIVE_LOANS,
                              PAWN_TICKET_HEADER, PAY_LOAN_BUTTON,
@@ -31,7 +31,10 @@ router = Router()
 
 @router.message(F.text == LOANS_MENU_TEXT)
 async def loans_menu_handler(
-    message: Message, state: FSMContext, users: UsersRepo
+    message: Message,
+    state: FSMContext,
+    users: UsersRepoProtocol,
+    lombardis: LombardisAPIProtocol,
 ) -> None:
 
     user = await users.get_user({"chat_id": message.chat.id})
@@ -39,7 +42,7 @@ async def loans_menu_handler(
         logfire.error(f"User with chat_id {message.chat.id} not found in database.")
         return
 
-    client_loans = await LombardisAPI().get_client_loans(user.client_id)
+    client_loans = await lombardis.get_client_loans(user.client_id)
 
     if client_loans is None:
         logfire.error("Failed to retrieve client loans.")
@@ -63,13 +66,16 @@ async def loans_menu_handler(
 
 @router.callback_query(LoansCallback.filter(), LoanDetailsMode.as_editing)
 async def view_loans_as_editing(
-    callback: CallbackQuery, callback_data: LoansCallback, state: FSMContext
+    callback: CallbackQuery,
+    callback_data: LoansCallback,
+    state: FSMContext,
+    lombardis: LombardisAPIProtocol,
 ) -> None:
     assert callback.bot is not None
     assert callback.message is not None
 
     loan_id = str(callback_data.loan_id)
-    loan_details = await LombardisAPI().get_loan_details(loan_id)
+    loan_details = await lombardis.get_loan_details(loan_id)
     if loan_details is None:
         logfire.error(f"Failed to retrieve loan details for loan_id {loan_id}.")
         return
@@ -101,12 +107,15 @@ async def view_loans_as_editing(
 
 @router.callback_query(LoansCallback.filter(), LoanDetailsMode.as_new)
 async def view_loan_as_new_message(
-    callback: CallbackQuery, callback_data: LoansCallback, state: FSMContext
+    callback: CallbackQuery,
+    callback_data: LoansCallback,
+    state: FSMContext,
+    lombardis: LombardisAPIProtocol,
 ) -> None:
     assert callback.message is not None
 
     loan_id = str(callback_data.loan_id)
-    loan_details = await LombardisAPI().get_loan_details(loan_id)
+    loan_details = await lombardis.get_loan_details(loan_id)
     if loan_details is None:
         logfire.error(f"Failed to retrieve loan details for loan_id {loan_id}.")
         return
