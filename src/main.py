@@ -16,10 +16,11 @@ from tests.fakes.lombardis import LombardisAPIFake
 
 
 async def init(bot: Bot, users: UsersRepoProtocol) -> None:
-    await asyncio.gather(
+    tasks = [
         users.bootstrap(),
         set_bot_commands(bot),
-    )
+    ]
+    await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
