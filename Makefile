@@ -3,17 +3,17 @@ clean:
 	docker volume rm almaz_db
 
 up:
-	docker compose up --build
+	cd deploy && docker compose up --build
 
 down:
-	docker compose down
+	cd deploy && docker compose down
 
 black:
-	black .
-	python -m isort .
+	black ./src
+	python -m isort ./src
 
 check:
-	ruff check
-	python -m mypy .
+	ruff check ./src
+	python -m mypy ./src
 
 .PHONY: clean, up, down, black, check
