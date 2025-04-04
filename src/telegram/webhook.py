@@ -11,28 +11,30 @@ from logger import logfire
 from lombardis.protocols import LombardisAPI
 from repository.protocols import UsersRepo
 
-BASE_WEBHOOK_URL = conf["WEBHOOK_BASE"]
+WEBHOOK_BASE = conf["WEBHOOK_BASE"]
 WEBHOOK_PATH = "/webhook"
+WEBHOOK_URL = f"{WEBHOOK_BASE}{WEBHOOK_PATH}"
+
 WEBHOOK_SECRET = hashlib.sha256(random.randbytes(256)).hexdigest()
-WEBHOOK_URL = f"{BASE_WEBHOOK_URL}{WEBHOOK_PATH}"
 
 WEBHOOK_SUCCESS = f'Webhook URL: "{WEBHOOK_URL}" Secret: "{WEBHOOK_SECRET}"'
 WEBHOOK_DELETED = "Webhook deleted."
 
 
-async def on_startup(bot: Bot) -> None:
-    await bot.set_webhook(WEBHOOK_URL, secret_token=WEBHOOK_SECRET)
-    logfire.info(WEBHOOK_SUCCESS)
-
-
-async def on_shutdown(bot: Bot) -> None:
-    await bot.delete_webhook()
-    logfire.info(WEBHOOK_DELETED)
-
-
 def get_webhook_app(
     dp: Dispatcher, bot: Bot, users: UsersRepo, lombardis: LombardisAPI
 ) -> web.Application:
+    
+    async def on_startup() -> None:
+        await bot.set_webhook(WEBHOOK_URL, secret_token=WEBHOOK_SECRET)
+        logfire.info(WEBHOOK_SUCCESS)
+
+
+    async def on_shutdown() -> None:
+        await bot.delete_webhook()
+        await users.close()
+        logfire.info(WEBHOOK_DELETED)
+
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 

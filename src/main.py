@@ -27,8 +27,8 @@ async def init(bot: Bot, users: UsersRepo) -> None:
 
 
 if __name__ == "__main__":
-    dp, bot = get_dispatcher()
     loop = asyncio.new_event_loop()
+    dp, bot = get_dispatcher()
 
     lombardis: LombardisAPI
     users: UsersRepo
@@ -41,6 +41,7 @@ if __name__ == "__main__":
         users = UsersRepoSQLite()
 
     loop.run_until_complete(init(bot, users))
+    dp.shutdown.register(users.close)
 
     if conf["POLLING"].lower() == "true":
         # polling mode
