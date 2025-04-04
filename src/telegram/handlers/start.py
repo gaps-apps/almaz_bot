@@ -12,9 +12,9 @@ from aiogram.utils.markdown import hitalic
 from aiogram_calendar import (DialogCalendar, DialogCalendarCallback,
                               get_user_locale)
 
-from lombardis.api import LombardisAPIProtocol
+from lombardis.protocols import LombardisAPI
 from repository.dto import UserDTO
-from repository.users import UsersRepoProtocol
+from repository.protocols import UsersRepo
 
 from .helpers import replace_english_with_russian
 from .text_constants import (AUTH_NEEDED, BIRTHDAY_PLEASE, GREETINGS,
@@ -32,7 +32,7 @@ router = Router()
 
 @router.message(CommandStart())
 async def command_start_handler(
-    message: Message, state: FSMContext, users: UsersRepoProtocol
+    message: Message, state: FSMContext, users: UsersRepo
 ) -> None:
     assert message.from_user is not None
 
@@ -86,8 +86,8 @@ async def birthday_handler(message: Message, state: FSMContext) -> None:
 async def loan_number_handler(
     message: Message,
     state: FSMContext,
-    users: UsersRepoProtocol,
-    lombardis: LombardisAPIProtocol,
+    users: UsersRepo,
+    lombardis: LombardisAPI,
 ) -> None:
     assert message.text is not None
     assert message.from_user is not None

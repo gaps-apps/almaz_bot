@@ -120,7 +120,7 @@ LOAN_DETAILS = {
 }
 
 
-class LombardisAPIFake:
+class LombardisFake:
 
     async def get_client_details(self, client_id: str) -> ClientDetailsResponse | None:
         return ClientDetailsResponse(

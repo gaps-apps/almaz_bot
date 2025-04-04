@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Protocol
+from typing import Any, Dict, Optional
 
 import aiosqlite
 import logfire
@@ -8,23 +8,7 @@ from config import conf
 from .dto import UserDTO
 
 
-class UsersRepoProtocol(Protocol):
-    """Protocol for UsersRepo defining expected methods."""
-
-    async def connect(self) -> None: ...
-
-    async def close(self) -> None: ...
-
-    async def bootstrap(self) -> None: ...
-
-    async def user_exists(self, chat_id: int) -> bool: ...
-
-    async def add_user(self, user: UserDTO) -> None: ...
-
-    async def get_user(self, params: Dict[str, Any]) -> Optional[UserDTO]: ...
-
-
-class UsersRepo:
+class UsersRepoSQLite:
     """Repository class for managing user-related database operations."""
 
     def __init__(self, db_name: str = conf["USERS_DB"]):

@@ -8,8 +8,8 @@ from aiohttp import web
 
 from config import conf
 from logger import logfire
-from lombardis.api import LombardisAPIProtocol
-from repository.users import UsersRepoProtocol
+from lombardis.protocols import LombardisAPI
+from repository.protocols import UsersRepo
 
 BASE_WEBHOOK_URL = conf["WEBHOOK_BASE"]
 WEBHOOK_PATH = "/webhook"
@@ -31,7 +31,7 @@ async def on_shutdown(bot: Bot) -> None:
 
 
 def get_webhook_app(
-    dp: Dispatcher, bot: Bot, users: UsersRepoProtocol, lombardis: LombardisAPIProtocol
+    dp: Dispatcher, bot: Bot, users: UsersRepo, lombardis: LombardisAPI
 ) -> web.Application:
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)

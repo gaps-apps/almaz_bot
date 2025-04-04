@@ -9,8 +9,8 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.utils.markdown import hbold, hitalic
 
-from lombardis.api import LombardisAPIProtocol
-from repository.users import UsersRepoProtocol
+from lombardis.protocols import LombardisAPI
+from repository.protocols import UsersRepo
 
 from .text_constants import (LOANS_MENU_TEXT, NO_ACTIVE_LOANS,
                              PAWN_TICKET_HEADER, PAY_LOAN_BUTTON,
@@ -33,8 +33,8 @@ router = Router()
 async def loans_menu_handler(
     message: Message,
     state: FSMContext,
-    users: UsersRepoProtocol,
-    lombardis: LombardisAPIProtocol,
+    users: UsersRepo,
+    lombardis: LombardisAPI,
 ) -> None:
 
     user = await users.get_user({"chat_id": message.chat.id})
@@ -69,7 +69,7 @@ async def view_loans_as_editing(
     callback: CallbackQuery,
     callback_data: LoansCallback,
     state: FSMContext,
-    lombardis: LombardisAPIProtocol,
+    lombardis: LombardisAPI,
 ) -> None:
     assert callback.bot is not None
     assert callback.message is not None
@@ -110,7 +110,7 @@ async def view_loan_as_new_message(
     callback: CallbackQuery,
     callback_data: LoansCallback,
     state: FSMContext,
-    lombardis: LombardisAPIProtocol,
+    lombardis: LombardisAPI,
 ) -> None:
     assert callback.message is not None
 
