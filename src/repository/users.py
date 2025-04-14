@@ -9,14 +9,11 @@ from .dto import UserDTO
 
 
 class UsersRepoSQLite:
-    """Repository class for managing user-related database operations."""
-
     def __init__(self, db_name: str = conf["USERS_DB"]):
         self.db_name = db_name
         self.connection: aiosqlite.Connection | None = None
 
     async def connect(self) -> None:
-        """Establishes a shared database connection."""
         try:
             if self.connection is None:
                 self.connection = await aiosqlite.connect(self.db_name)
@@ -25,7 +22,6 @@ class UsersRepoSQLite:
             raise
 
     async def close(self) -> None:
-        """Closes the shared database connection."""
         try:
             if self.connection:
                 await self.connection.close()
@@ -35,7 +31,6 @@ class UsersRepoSQLite:
             raise
 
     async def bootstrap(self) -> None:
-        """Creates the users table if it does not exist."""
         try:
             await self.connect()
             assert self.connection is not None
@@ -55,7 +50,6 @@ class UsersRepoSQLite:
             raise
 
     async def user_exists(self, chat_id: int) -> bool:
-        """Checks if a user with the given chat_id exists in the database."""
         try:
             await self.connect()
             assert self.connection is not None
@@ -69,7 +63,6 @@ class UsersRepoSQLite:
             raise
 
     async def add_user(self, user: UserDTO) -> None:
-        """Adds a new user to the database."""
         try:
             await self.connect()
             assert self.connection is not None
@@ -86,7 +79,6 @@ class UsersRepoSQLite:
             raise
 
     async def get_user(self, params: Dict[str, Any]) -> Optional[UserDTO]:
-        """Fetches a user by given parameters."""
         try:
             if not params:
                 raise ValueError("At least one parameter must be provided.")
