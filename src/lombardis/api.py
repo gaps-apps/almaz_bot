@@ -18,15 +18,16 @@ class LombardisAsyncHTTP:
         password: str = conf["LOMBARDIS_PASSWORD"],
     ):
         self.auth = aiohttp.BasicAuth(username, password)
+        self.headers = {"Content-Type": "application/json"}
 
     async def get_client_loans(self, client_id: str) -> ClientLoansResponse | None:
+        payload = json.dumps({"ClientID": client_id})
+
         with logfire.span(f"fetching client loans cliend_id={client_id}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
-                    payload = json.dumps({"ClientID": client_id})
-                    headers = {"Content-Type": "application/json"}
                     async with session.put(
-                        self.BASE_URL + "getClientLoans", data=payload, headers=headers
+                        self.BASE_URL + "getClientLoans", data=payload, headers=self.headers
                     ) as response:
                         response.raise_for_status()
                         raw_data = await response.read()
@@ -48,15 +49,15 @@ class LombardisAsyncHTTP:
             return None
 
     async def get_client_details(self, client_id: str) -> ClientDetailsResponse | None:
+        payload = json.dumps({"clientID": client_id})
+
         with logfire.span(f"fetching client details cliend_id={client_id}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
-                    payload = json.dumps({"clientID": client_id})
-                    headers = {"Content-Type": "application/json"}
                     async with session.put(
                         self.BASE_URL + "getClientDetails",
                         data=payload,
-                        headers=headers,
+                        headers=self.headers,
                     ) as response:
                         response.raise_for_status()
                         raw_data = await response.read()
@@ -78,14 +79,13 @@ class LombardisAsyncHTTP:
             return None
 
     async def get_loan_details(self, loan_id: str) -> LoanDetailsResponse | None:
-        """Fetches loan details for a given loan ID."""
+        payload = json.dumps({"LoanID": loan_id})
+
         with logfire.span(f"fetching loan details loan_id={loan_id}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
-                    payload = json.dumps({"LoanID": loan_id})
-                    headers = {"Content-Type": "application/json"}
                     async with session.put(
-                        self.BASE_URL + "getLoanDetails", data=payload, headers=headers
+                        self.BASE_URL + "getLoanDetails", data=payload, headers=self.headers
                     ) as response:
                         response.raise_for_status()
                         raw_data = await response.read()
@@ -104,16 +104,13 @@ class LombardisAsyncHTTP:
             return None
 
     async def get_client_id(self, query_string: str) -> str | None:
-        """Fetches ClientID from Lombardis API after validating input."""
-
         payload = json.dumps({"queryString": query_string})
-        headers = {"Content-Type": "application/json"}
 
         with logfire.span(f"fetching client ID for query={query_string}"):
             async with aiohttp.ClientSession(auth=self.auth) as session:
                 try:
                     async with session.put(
-                        self.BASE_URL + "getClientID", data=payload, headers=headers
+                        self.BASE_URL + "getClientID", data=payload, headers=self.headers
                     ) as response:
                         response.raise_for_status()
                         raw_data = await response.read()
