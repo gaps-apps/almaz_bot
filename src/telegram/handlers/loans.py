@@ -65,7 +65,6 @@ async def loans_menu_handler(
         await state.set_state(LoanDetailsMode.as_new)
     except Exception as e:
         logger.error(f"Error in loans_menu_handler: {e}")
-        await message.answer("An error occurred while retrieving loans.")
 
 
 @router.callback_query(LoansCallback.filter(), LoanDetailsMode.as_editing)
@@ -104,7 +103,6 @@ async def view_loans_as_editing(
         )
     except Exception as e:
         logger.error(f"Error in view_loans_as_editing: {e}")
-        await callback.answer("An error occurred while retrieving loan details.")
     finally:
         await callback.answer()
 
@@ -138,7 +136,6 @@ async def view_loan_as_new_message(
         await state.set_state(LoanDetailsMode.as_editing)
     except Exception as e:
         logger.error(f"Error in view_loan_as_new_message: {e}")
-        await callback.answer("An error occurred while retrieving loan details.")
     finally:
         await callback.answer()
 

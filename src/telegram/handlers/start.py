@@ -77,7 +77,6 @@ async def command_start_handler(
                 )
     except Exception as e:
         logger.error(f"Error in command_start_handler: {e}")
-        await message.answer("An error occurred during the start command.")
 
 
 @router.message(AuthState.waiting_for_birthday, F.text)
@@ -162,7 +161,6 @@ async def loan_number_handler(
         )
     except Exception as e:
         logger.error(f"Error in loan_number_handler: {e}")
-        await message.answer("An error occurred during authentication.")
 
 
 @router.callback_query(AuthState.waiting_for_birthday, DialogCalendarCallback.filter())

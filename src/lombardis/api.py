@@ -55,7 +55,7 @@ class LombardisAsyncHTTP:
                         response.raise_for_status()
                         data = await response.json()
                         return response_schema(**data)
-            
+
             except ValidationError as e:
                 raise ValueError(f"Response validation failed: {e}")
             except Exception as e:
