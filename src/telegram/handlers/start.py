@@ -76,7 +76,7 @@ async def command_start_handler(
                     reply_markup=keyboard.as_markup(resize_keyboard=True),
                 )
     except Exception as e:
-        logger.error(f"Error in command_start_handler: {e}")
+        logger.exception(f"Error in command_start_handler: {e}")
 
 
 @router.message(AuthState.waiting_for_birthday, F.text)
@@ -160,7 +160,7 @@ async def loan_number_handler(
             reply_markup=keyboard.as_markup(resize_keyboard=True),
         )
     except Exception as e:
-        logger.error(f"Error in loan_number_handler: {e}")
+        logger.exception(f"Error in loan_number_handler: {e}")
 
 
 @router.callback_query(AuthState.waiting_for_birthday, DialogCalendarCallback.filter())

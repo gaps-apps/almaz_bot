@@ -64,7 +64,24 @@ async def loans_menu_handler(
         await message.answer(PAWN_TICKET_HEADER, reply_markup=keyboard.as_markup())
         await state.set_state(LoanDetailsMode.as_new)
     except Exception as e:
-        logger.error(f"Error in loans_menu_handler: {e}")
+        logger.exception(f"Error in loans_menu_handler: {e}")
+
+
+async def _generate_loan_details_message(lombardis: LombardisAPI, loan_id: str):
+    try:
+        loan_details = await lombardis.get_loan_details(loan_id)
+
+        keyboard = InlineKeyboardBuilder()
+        keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
+
+        message_text = "\n".join(
+            [f"{hbold(loan_details.loan_number)}\n{loan_details.loan_sum} руб.\n"]
+            + [presentation for presentation in loan_details.stuff]
+            + [f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"]
+        )
+        return message_text, keyboard
+    except Exception as e:
+        logger.exception(f"Error in _generate_loan_details_message: {e}")
 
 
 @router.callback_query(LoansCallback.filter(), LoanDetailsMode.as_editing)
@@ -78,10 +95,7 @@ async def view_loans_as_editing(
     assert callback.message is not None
     try:
         loan_id = str(callback_data.loan_id)
-        loan_details = await lombardis.get_loan_details(loan_id)
-
-        keyboard = InlineKeyboardBuilder()
-        keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
+        message_text, keyboard = await _generate_loan_details_message(lombardis, loan_id)
 
         state_data = await state.get_data()
         message_id = state_data.get("loan_details_message_id")
@@ -90,19 +104,11 @@ async def view_loans_as_editing(
             return
 
         await callback.bot.edit_message_text(
-            text="\n".join(
-                [f"{hbold(loan_details.loan_number)}\n{loan_details.loan_sum} руб.\n"]
-                + [presentation for presentation in loan_details.stuff]
-                + [
-                    f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"
-                ]
-            ),
+            text=message_text,
             reply_markup=keyboard.as_markup(resize_keyboard=True),
             message_id=message_id,
             chat_id=callback.message.chat.id,
         )
-    except Exception as e:
-        logger.error(f"Error in view_loans_as_editing: {e}")
     finally:
         await callback.answer()
 
@@ -117,25 +123,14 @@ async def view_loan_as_new_message(
     assert callback.message is not None
     try:
         loan_id = str(callback_data.loan_id)
-        loan_details = await lombardis.get_loan_details(loan_id)
-
-        keyboard = InlineKeyboardBuilder()
-        keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
+        message_text, keyboard = await _generate_loan_details_message(lombardis, loan_id)
 
         sent_message = await callback.message.answer(
-            text="\n".join(
-                [f"{hbold(loan_details.loan_number)}\n{loan_details.loan_sum} руб.\n"]
-                + [presentation for presentation in loan_details.stuff]
-                + [
-                    f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"
-                ]
-            ),
+            text=message_text,
             reply_markup=keyboard.as_markup(resize_keyboard=True),
         )
         await state.set_data({"loan_details_message_id": sent_message.message_id})
         await state.set_state(LoanDetailsMode.as_editing)
-    except Exception as e:
-        logger.error(f"Error in view_loan_as_new_message: {e}")
     finally:
         await callback.answer()
 
