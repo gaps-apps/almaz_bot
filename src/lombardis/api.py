@@ -22,8 +22,8 @@ T = TypeVar("T")
 
 
 class HTTP_METHOD(Enum):
-    GET = "GET"
-    PUT = "PUT"
+    GET = "get"
+    PUT = "put"
 
 
 class LombardisAsyncHTTP:
@@ -42,23 +42,20 @@ class LombardisAsyncHTTP:
         api_method: str,
         request_data: dict[str, str],
         response_schema: Type[T],
-        method: HTTP_METHOD,
+        http_method: HTTP_METHOD,
     ) -> T:
         url = f"{self.BASE_URL}/{api_method}"
         async with self.session as session:
             try:
-                if method == HTTP_METHOD.PUT:
-                    async with session.put(url, json=request_data) as response:
-                        response.raise_for_status()
-                        data = await response.json()
-                        return response_schema(**data)
-                elif method == HTTP_METHOD.GET:
-                    async with session.get(url, params=request_data) as response:
-                        response.raise_for_status()
-                        data = await response.json()
-                        return response_schema(**data)
+                get_response = getattr(session, http_method.value)
+                if get_response is None:
+                    raise ValueError(f"Unsupported HTTP method: {http_method}")
                 else:
-                    raise ValueError(f"Unsupported HTTP method: {method}")
+                    async with get_response(url, json=request_data) as response:
+                        response.raise_for_status()
+                        data = await response.json()
+                        return response_schema(**data)
+            
             except ValidationError as e:
                 raise ValueError(f"Response validation failed: {e}")
             except Exception as e:
