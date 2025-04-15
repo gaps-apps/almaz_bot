@@ -128,7 +128,7 @@ async def test_get_client_details(
 
     result = await lombardis_client.get_client_details("12345")
     assert result == ClientDetails(
-        full_name=f"{mock_data['surname']} {mock_data['name']} {mock_data['patronymic']}",
+        full_name=f"{mock_data['surname']} {mock_data['name']} {mock_data['patronymic'] or ''}".strip(),
         phone=mock_data["phone"],
     )
     assert mock_session.get_called_with() == [
