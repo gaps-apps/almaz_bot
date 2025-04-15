@@ -4,7 +4,7 @@ import aiosqlite
 
 from config import conf
 
-from .dto import UserDTO
+from .dto import User
 
 
 class UsersRepoSQLite:
@@ -56,7 +56,7 @@ class UsersRepoSQLite:
         except Exception as e:
             raise RuntimeError(f"Failed to check user existence: {e}")
 
-    async def add_user(self, user: UserDTO) -> None:
+    async def add_user(self, user: User) -> None:
         try:
             await self.connect()
             assert self.connection is not None
@@ -71,7 +71,7 @@ class UsersRepoSQLite:
         except Exception as e:
             raise RuntimeError(f"Failed to add user to sqlite database: {e}")
 
-    async def get_user(self, params: Dict[str, Any]) -> Optional[UserDTO]:
+    async def get_user(self, params: Dict[str, Any]) -> Optional[User]:
         if not params:
             raise ValueError("At least one parameter must be provided.")
 
@@ -85,7 +85,7 @@ class UsersRepoSQLite:
             async with self.connection.execute(query, values) as cursor:
                 row = await cursor.fetchone()
                 if row:
-                    return UserDTO(
+                    return User(
                         chat_id=row[0],
                         full_name=row[1],
                         client_id=row[2],

@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, Protocol
 
-from .dto import UserDTO
+from .dto import User
 
 
 class UsersRepo(Protocol):
@@ -14,6 +14,6 @@ class UsersRepo(Protocol):
 
     async def user_exists(self, chat_id: int) -> bool: ...
 
-    async def add_user(self, user: UserDTO) -> None: ...
+    async def add_user(self, user: User) -> None: ...
 
-    async def get_user(self, params: Dict[str, Any]) -> Optional[UserDTO]: ...
+    async def get_user(self, params: Dict[str, Any]) -> Optional[User]: ...

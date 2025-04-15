@@ -12,7 +12,7 @@ from aiogram.utils.markdown import hitalic
 from aiogram_calendar import DialogCalendar, DialogCalendarCallback, get_user_locale
 
 from lombardis.protocols import LombardisAPI
-from repository.dto import UserDTO
+from repository.dto import User
 from repository.protocols import UsersRepo
 
 from .helpers import replace_english_with_russian
@@ -62,7 +62,7 @@ async def command_start_handler(
                 keyboard.button(text=LOANS_MENU_TEXT)
                 keyboard.adjust(1)
 
-                user: Optional[UserDTO] = await users.get_user(
+                user: Optional[User] = await users.get_user(
                     {"chat_id": message.from_user.id}
                 )
                 if user is None:
@@ -136,7 +136,7 @@ async def loan_number_handler(
             return
 
         await users.add_user(
-            UserDTO(
+            User(
                 message.from_user.id,
                 client_details.full_name,
                 str(client_id_dto.client_id),

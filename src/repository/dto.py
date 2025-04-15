@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class UserDTO:
+class User:
     """Authorizing Telegram users with this."""
 
     chat_id: int
