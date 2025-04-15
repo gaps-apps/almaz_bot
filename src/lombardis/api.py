@@ -1,6 +1,7 @@
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Optional
 from aiohttp import ClientSession, BasicAuth
 from pydantic import ValidationError
+from enum import Enum
 
 from lombardis.schemas import (
     ClientIDResponse,
@@ -19,20 +20,39 @@ from config import conf  # Assuming conf is imported from a config module
 
 T = TypeVar("T")
 
+class HTTP_METHOD(Enum):
+    GET = "GET"
+    PUT = "PUT"
+
 class LombardisAsyncHTTP:
-    BASE_URL = conf["LOMBARDIS_URL"]
-    AUTH = BasicAuth(conf["LOMBARDIS_USER"], conf["LOMBARDIS_PASSWORD"])
+    def __init__(
+        self, 
+        session: Optional[ClientSession] = None, 
+        base_url: str = conf["LOMBARDIS_URL"], 
+        auth: BasicAuth = BasicAuth(conf["LOMBARDIS_USER"], conf["LOMBARDIS_PASSWORD"])
+    ):
+        self.BASE_URL = base_url
+        self.AUTH = auth
+        self.session = session or ClientSession(auth=self.AUTH)
 
     async def make_request(
-        self, api_method: str, request_data: dict[str, str], response_schema: Type[T]
+        self, api_method: str, request_data: dict[str, str], response_schema: Type[T], method: HTTP_METHOD
     ) -> T:
         url = f"{self.BASE_URL}/{api_method}"
-        async with ClientSession(auth=self.AUTH) as session:
+        async with self.session as session:
             try:
-                async with session.post(url, json=request_data) as response:
-                    response.raise_for_status()
-                    data = await response.json()
-                    return response_schema(**data)
+                if method == HTTP_METHOD.PUT:
+                    async with session.put(url, json=request_data) as response:
+                        response.raise_for_status()
+                        data = await response.json()
+                        return response_schema(**data)
+                elif method == HTTP_METHOD.GET:
+                    async with session.get(url, params=request_data) as response:
+                        response.raise_for_status()
+                        data = await response.json()
+                        return response_schema(**data)
+                else:
+                    raise ValueError(f"Unsupported HTTP method: {method}")
             except ValidationError as e:
                 raise ValueError(f"Response validation failed: {e}")
             except Exception as e:
@@ -40,13 +60,13 @@ class LombardisAsyncHTTP:
 
     async def get_client_id(self, query_string: str) -> ClientID:
         response = await self.make_request(
-            "getClientID", {"queryString": query_string}, ClientIDResponse
+            "getClientID", {"queryString": query_string}, ClientIDResponse, HTTP_METHOD.PUT
         )
         return ClientID(client_id=response.ClientID)
 
     async def get_client_details(self, client_id: str) -> ClientDetails:
         response = await self.make_request(
-            "getClientDetails", {"clientID": client_id}, ClientDetailsResponse
+            "getClientDetails", {"clientID": client_id}, ClientDetailsResponse, HTTP_METHOD.PUT
         )
         return ClientDetails(
             full_name=f"{response.surname} {response.name} {response.patronymic or ''}".strip(),
@@ -55,7 +75,7 @@ class LombardisAsyncHTTP:
 
     async def get_client_loans(self, client_id: str) -> ClientLoans:
         response = await self.make_request(
-            "getClientLoans", {"clientID": client_id}, ClientLoansResponse
+            "getClientLoans", {"clientID": client_id}, ClientLoansResponse, HTTP_METHOD.PUT
         )
         return ClientLoans(
             loans=[
@@ -66,7 +86,7 @@ class LombardisAsyncHTTP:
 
     async def get_loan_details(self, loan_id: str) -> LoanDetails:
         response = await self.make_request(
-            "getLoanDetails", {"loanID": loan_id}, LoanDetailsResponse
+            "getLoanDetails", {"loanID": loan_id}, LoanDetailsResponse, HTTP_METHOD.PUT
         )
         return LoanDetails(
             loan_number=response.LoanNumber,
