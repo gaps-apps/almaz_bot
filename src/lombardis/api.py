@@ -20,23 +20,29 @@ from config import conf  # Assuming conf is imported from a config module
 
 T = TypeVar("T")
 
+
 class HTTP_METHOD(Enum):
     GET = "GET"
     PUT = "PUT"
 
+
 class LombardisAsyncHTTP:
     def __init__(
-        self, 
-        session: Optional[ClientSession] = None, 
-        base_url: str = conf["LOMBARDIS_URL"], 
-        auth: BasicAuth = BasicAuth(conf["LOMBARDIS_USER"], conf["LOMBARDIS_PASSWORD"])
+        self,
+        session: Optional[ClientSession] = None,
+        base_url: str = conf["LOMBARDIS_URL"],
+        auth: BasicAuth = BasicAuth(conf["LOMBARDIS_USER"], conf["LOMBARDIS_PASSWORD"]),
     ):
         self.BASE_URL = base_url
         self.AUTH = auth
         self.session = session or ClientSession(auth=self.AUTH)
 
     async def make_request(
-        self, api_method: str, request_data: dict[str, str], response_schema: Type[T], method: HTTP_METHOD
+        self,
+        api_method: str,
+        request_data: dict[str, str],
+        response_schema: Type[T],
+        method: HTTP_METHOD,
     ) -> T:
         url = f"{self.BASE_URL}/{api_method}"
         async with self.session as session:
@@ -60,13 +66,19 @@ class LombardisAsyncHTTP:
 
     async def get_client_id(self, query_string: str) -> ClientID:
         response = await self.make_request(
-            "getClientID", {"queryString": query_string}, ClientIDResponse, HTTP_METHOD.PUT
+            "getClientID",
+            {"queryString": query_string},
+            ClientIDResponse,
+            HTTP_METHOD.PUT,
         )
         return ClientID(client_id=response.ClientID)
 
     async def get_client_details(self, client_id: str) -> ClientDetails:
         response = await self.make_request(
-            "getClientDetails", {"clientID": client_id}, ClientDetailsResponse, HTTP_METHOD.PUT
+            "getClientDetails",
+            {"clientID": client_id},
+            ClientDetailsResponse,
+            HTTP_METHOD.PUT,
         )
         return ClientDetails(
             full_name=f"{response.surname} {response.name} {response.patronymic or ''}".strip(),
@@ -75,13 +87,13 @@ class LombardisAsyncHTTP:
 
     async def get_client_loans(self, client_id: str) -> ClientLoans:
         response = await self.make_request(
-            "getClientLoans", {"clientID": client_id}, ClientLoansResponse, HTTP_METHOD.PUT
+            "getClientLoans",
+            {"clientID": client_id},
+            ClientLoansResponse,
+            HTTP_METHOD.PUT,
         )
         return ClientLoans(
-            loans=[
-                Loan(loan.LoanID, loan.pawnBillNumber)
-                for loan in response.Loans
-            ]
+            loans=[Loan(loan.LoanID, loan.pawnBillNumber) for loan in response.Loans]
         )
 
     async def get_loan_details(self, loan_id: str) -> LoanDetails:

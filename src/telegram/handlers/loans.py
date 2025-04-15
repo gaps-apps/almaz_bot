@@ -1,6 +1,6 @@
 from uuid import UUID
 
-import logfire
+import logging
 from aiogram import F, Router
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
@@ -12,9 +12,16 @@ from aiogram.utils.markdown import hbold, hitalic
 from lombardis.protocols import LombardisAPI
 from repository.protocols import UsersRepo
 
-from .text_constants import (LOANS_MENU_TEXT, NO_ACTIVE_LOANS,
-                             PAWN_TICKET_HEADER, PAY_LOAN_BUTTON,
-                             PAYLOAN_SELECTION_MESSAGE, RUB)
+from .text_constants import (
+    LOANS_MENU_TEXT,
+    NO_ACTIVE_LOANS,
+    PAWN_TICKET_HEADER,
+    PAY_LOAN_BUTTON,
+    PAYLOAN_SELECTION_MESSAGE,
+    RUB,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class LoansCallback(CallbackData, prefix="loans"):
@@ -36,32 +43,29 @@ async def loans_menu_handler(
     users: UsersRepo,
     lombardis: LombardisAPI,
 ) -> None:
+    try:
+        user = await users.get_user({"chat_id": message.chat.id})
+        if user is None:
+            return
+        client_loans = await lombardis.get_client_loans(user.client_id)
 
-    user = await users.get_user({"chat_id": message.chat.id})
-    if user is None:
-        logfire.error(f"User with chat_id {message.chat.id} not found in database.")
-        return
+        if not client_loans.loans:
+            await message.answer(NO_ACTIVE_LOANS)
+            return
 
-    client_loans = await lombardis.get_client_loans(user.client_id)
+        keyboard = InlineKeyboardBuilder()
+        for loan in client_loans.loans:
+            keyboard.button(
+                text=f"{loan.pawn_bill_number}",
+                callback_data=LoansCallback(loan_id=loan.loan_id),
+            )
+        keyboard.adjust(2)
 
-    if client_loans is None:
-        logfire.error("Failed to retrieve client loans.")
-        return
-
-    if not client_loans.loans:
-        await message.answer(NO_ACTIVE_LOANS)
-        return
-
-    keyboard = InlineKeyboardBuilder()
-    for loan in client_loans.loans:
-        keyboard.button(
-            text=f"{loan.pawn_bill_number}",
-            callback_data=LoansCallback(loan_id=loan.loan_id),
-        )
-    keyboard.adjust(2)
-
-    await message.answer(PAWN_TICKET_HEADER, reply_markup=keyboard.as_markup())
-    await state.set_state(LoanDetailsMode.as_new)
+        await message.answer(PAWN_TICKET_HEADER, reply_markup=keyboard.as_markup())
+        await state.set_state(LoanDetailsMode.as_new)
+    except Exception as e:
+        logger.error(f"Error in loans_menu_handler: {e}")
+        await message.answer("An error occurred while retrieving loans.")
 
 
 @router.callback_query(LoansCallback.filter(), LoanDetailsMode.as_editing)
@@ -73,34 +77,34 @@ async def view_loans_as_editing(
 ) -> None:
     assert callback.bot is not None
     assert callback.message is not None
-
-    loan_id = str(callback_data.loan_id)
-    loan_details = await lombardis.get_loan_details(loan_id)
-    if loan_details is None:
-        logfire.error(f"Failed to retrieve loan details for loan_id {loan_id}.")
-        return
-
-    keyboard = InlineKeyboardBuilder()
-    keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
-
-    state_data = await state.get_data()
-
-    message_id = state_data.get("loan_details_message_id")
-    if message_id is None:
-        logfire.error("Missing loan_details_message_id in state data.")
-        return
-
     try:
+        loan_id = str(callback_data.loan_id)
+        loan_details = await lombardis.get_loan_details(loan_id)
+
+        keyboard = InlineKeyboardBuilder()
+        keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
+
+        state_data = await state.get_data()
+        message_id = state_data.get("loan_details_message_id")
+        if message_id is None:
+            logger.error("Missing loan_details_message_id in state data.")
+            return
+
         await callback.bot.edit_message_text(
             text="\n".join(
                 [f"{hbold(loan_details.loan_number)}\n{loan_details.loan_sum} руб.\n"]
                 + [presentation for presentation in loan_details.stuff]
-                + [f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"]
+                + [
+                    f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"
+                ]
             ),
             reply_markup=keyboard.as_markup(resize_keyboard=True),
             message_id=message_id,
             chat_id=callback.message.chat.id,
         )
+    except Exception as e:
+        logger.error(f"Error in view_loans_as_editing: {e}")
+        await callback.answer("An error occurred while retrieving loan details.")
     finally:
         await callback.answer()
 
@@ -113,27 +117,28 @@ async def view_loan_as_new_message(
     lombardis: LombardisAPI,
 ) -> None:
     assert callback.message is not None
-
-    loan_id = str(callback_data.loan_id)
-    loan_details = await lombardis.get_loan_details(loan_id)
-    if loan_details is None:
-        logfire.error(f"Failed to retrieve loan details for loan_id {loan_id}.")
-        return
-
-    keyboard = InlineKeyboardBuilder()
-    keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
-
     try:
+        loan_id = str(callback_data.loan_id)
+        loan_details = await lombardis.get_loan_details(loan_id)
+
+        keyboard = InlineKeyboardBuilder()
+        keyboard.button(text=PAY_LOAN_BUTTON, callback_data=f"pay_{loan_id}")
+
         sent_message = await callback.message.answer(
             text="\n".join(
                 [f"{hbold(loan_details.loan_number)}\n{loan_details.loan_sum} руб.\n"]
                 + [presentation for presentation in loan_details.stuff]
-                + [f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"]
+                + [
+                    f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"
+                ]
             ),
             reply_markup=keyboard.as_markup(resize_keyboard=True),
         )
         await state.set_data({"loan_details_message_id": sent_message.message_id})
         await state.set_state(LoanDetailsMode.as_editing)
+    except Exception as e:
+        logger.error(f"Error in view_loan_as_new_message: {e}")
+        await callback.answer("An error occurred while retrieving loan details.")
     finally:
         await callback.answer()
 

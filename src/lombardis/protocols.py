@@ -1,13 +1,13 @@
 from typing import Protocol
 
-from lombardis.dto import (ClientID, ClientDetails, ClientLoans, LoanDetails)
+from lombardis.dto import ClientID, ClientDetails, ClientLoans, LoanDetails
 
 
 class LombardisAPI(Protocol):
     async def get_client_loans(self, client_id: str) -> ClientLoans: ...
-    
+
     async def get_client_details(self, client_id: str) -> ClientDetails: ...
-    
+
     async def get_loan_details(self, loan_id: str) -> LoanDetails: ...
-    
+
     async def get_client_id(self, query_string: str) -> ClientID: ...
