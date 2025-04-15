@@ -1,17 +1,44 @@
 import sys
 import os
-from typing import Generator
 from contextlib import asynccontextmanager
+from polyfactory.factories import DataclassFactory
+import pytest
+from dotenv import load_dotenv
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-# Load environment variables from the .env file in the deploy directory
-from dotenv import load_dotenv # type: ignore
-load_dotenv(os.path.abspath(os.path.join(os.path.dirname(__file__), '../deploy/.env')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+load_dotenv(os.path.abspath(os.path.join(os.path.dirname(__file__), "../deploy/.env")))
 
-import pytest # type: ignore
-from lombardis.api import LombardisAsyncHTTP, HTTP_METHOD
+from lombardis.api import LombardisAsyncHTTP
 from lombardis.dto import ClientID, ClientDetails, ClientLoans, LoanDetails, Loan
+from lombardis.schemas import (
+    ClientIDResponse,
+    ClientDetailsResponse,
+    ClientLoansResponse,
+    LoanDetailsResponse,
+)  # Use schemas from schemas.py
+
+
+# Define factories for each schema
+class ClientIDResponseFactory(DataclassFactory[ClientIDResponse]):
+    __model__ = ClientIDResponse
+
+
+class ClientDetailsResponseFactory(DataclassFactory[ClientDetailsResponse]):
+    __model__ = ClientDetailsResponse
+
+
+class ClientLoansResponseFactory(DataclassFactory[ClientLoansResponse]):
+    __model__ = ClientLoansResponse
+
+
+class LoanDetailsResponseFactory(DataclassFactory[LoanDetailsResponse]):
+    __model__ = LoanDetailsResponse
+
+
+def generate_api_response(factory):
+    """Generate mock API response data using the provided factory."""
+    return factory.build().__dict__
+
 
 class ClientSessionMock:
     def __init__(self):
@@ -61,155 +88,90 @@ class MockResponse:
         if self._status >= 400:
             raise RuntimeError(f"HTTP Error: {self._status}")
 
+
 @pytest.fixture
 def mock_session() -> ClientSessionMock:
     return ClientSessionMock()
+
 
 @pytest.fixture
 def lombardis_client(mock_session: ClientSessionMock) -> LombardisAsyncHTTP:
     return LombardisAsyncHTTP(session=mock_session)
 
+
 @pytest.mark.asyncio
-async def test_get_client_id(lombardis_client: LombardisAsyncHTTP, mock_session: ClientSessionMock) -> None:
-    mock_session.configure(
-        "PUT",
-        f"{lombardis_client.BASE_URL}/getClientID",
-        {"ClientID": "123e4567-e89b-12d3-a456-426614174000"}  # UUID format
-    )
+async def test_get_client_id(
+    lombardis_client: LombardisAsyncHTTP, mock_session: ClientSessionMock
+) -> None:
+    mock_data = generate_api_response(ClientIDResponseFactory)
+    mock_session.configure("PUT", f"{lombardis_client.BASE_URL}/getClientID", mock_data)
 
     result = await lombardis_client.get_client_id("test_query")
-    assert result == ClientID(client_id="123e4567-e89b-12d3-a456-426614174000")
+    assert result == ClientID(client_id=mock_data["ClientID"])
     assert mock_session.get_called_with() == [
-        ("PUT", f"{lombardis_client.BASE_URL}/getClientID", {"queryString": "test_query"})
+        (
+            "PUT",
+            f"{lombardis_client.BASE_URL}/getClientID",
+            {"queryString": "test_query"},
+        )
     ]
 
+
 @pytest.mark.asyncio
-async def test_get_client_details(lombardis_client: LombardisAsyncHTTP, mock_session: ClientSessionMock) -> None:
+async def test_get_client_details(
+    lombardis_client: LombardisAsyncHTTP, mock_session: ClientSessionMock
+) -> None:
+    mock_data = generate_api_response(ClientDetailsResponseFactory)
     mock_session.configure(
-        "PUT",
-        f"{lombardis_client.BASE_URL}/getClientDetails",
-        {
-            "taskStatus": 1,
-            "dataToProcess": 1,
-            "dataProcessed": 1,
-            "dataDeclined": 0,
-            "progress": 100.0,
-            "isError": False,
-            "startTime": "2023-01-01T00:00:00",
-            "finishTime": "2023-01-01T01:00:00",
-            "errorMessage": "",
-            "providerID": "provider123",
-            "taskID": "123e4567-e89b-12d3-a456-426614174000",
-            "clientInternalCode": "internal123",
-            "surname": "Doe",
-            "name": "John",
-            "patronymic": None,
-            "email": None,
-            "phone": "123456789",
-            "taxNumber": None,
-            "additionalInformation": [],
-            "segments": []
-        }
+        "PUT", f"{lombardis_client.BASE_URL}/getClientDetails", mock_data
     )
 
     result = await lombardis_client.get_client_details("12345")
-    assert result == ClientDetails(full_name="Doe John", phone="123456789")
+    assert result == ClientDetails(
+        full_name=f"{mock_data['surname']} {mock_data['name']} {mock_data['patronymic']}",
+        phone=mock_data["phone"],
+    )
     assert mock_session.get_called_with() == [
         ("PUT", f"{lombardis_client.BASE_URL}/getClientDetails", {"clientID": "12345"})
     ]
 
+
 @pytest.mark.asyncio
-async def test_get_client_loans(lombardis_client: LombardisAsyncHTTP, mock_session: ClientSessionMock) -> None:
+async def test_get_client_loans(
+    lombardis_client: LombardisAsyncHTTP, mock_session: ClientSessionMock
+) -> None:
+    mock_data = generate_api_response(ClientLoansResponseFactory)
     mock_session.configure(
-        "PUT",
-        f"{lombardis_client.BASE_URL}/getClientLoans",
-        {
-            "taskStatus": 1,
-            "dataToProcess": 1,
-            "dataProcessed": 1,
-            "dataDeclined": 0,
-            "progress": 100.0,
-            "isError": False,
-            "startTime": "2023-01-01T00:00:00",
-            "finishTime": "2023-01-01T01:00:00",
-            "errorMessage": "",
-            "providerID": "provider123",
-            "taskID": "123e4567-e89b-12d3-a456-426614174000",
-            "Loans": [
-                {
-                    "LoanID": "123e4567-e89b-12d3-a456-426614174001",
-                    "pawnBillNumber": "PB123",
-                    "LoanDescription": "Loan Desc",
-                    "ShortLoanDescription": "Short Desc",
-                    "LoanDate": "2023-01-01T00:00:00",
-                    "PaymentDate": "2023-01-15T00:00:00",
-                    "Closed": False,
-                    "fullDebt": 1000.0,
-                    "prolongationSum": 100.0,
-                    "sellingDate": None,
-                    "PaymentAvailable": True
-                }
-            ]
-        }
+        "PUT", f"{lombardis_client.BASE_URL}/getClientLoans", mock_data
     )
 
     result = await lombardis_client.get_client_loans("12345")
-    assert result == ClientLoans(loans=[Loan(loan_id="123e4567-e89b-12d3-a456-426614174001", pawn_bill_number="PB123")])
+    assert result == ClientLoans(
+        loans=[
+            Loan(loan_id=loan.LoanID, pawn_bill_number=loan.pawnBillNumber)
+            for loan in mock_data["Loans"]
+        ]
+    )
     assert mock_session.get_called_with() == [
         ("PUT", f"{lombardis_client.BASE_URL}/getClientLoans", {"clientID": "12345"})
     ]
 
+
 @pytest.mark.asyncio
-async def test_get_loan_details(lombardis_client: LombardisAsyncHTTP, mock_session: ClientSessionMock) -> None:
+async def test_get_loan_details(
+    lombardis_client: LombardisAsyncHTTP, mock_session: ClientSessionMock
+) -> None:
+    mock_data = generate_api_response(LoanDetailsResponseFactory)
     mock_session.configure(
-        "PUT",
-        f"{lombardis_client.BASE_URL}/getLoanDetails",
-        {
-            "taskStatus": 1,
-            "dataToProcess": 1,
-            "dataProcessed": 1,
-            "dataDeclined": 0,
-            "progress": 100.0,
-            "isError": False,
-            "startTime": "2023-01-01T00:00:00",
-            "finishTime": "2023-01-01T01:00:00",
-            "errorMessage": "",
-            "providerID": "provider123",
-            "taskID": "123e4567-e89b-12d3-a456-426614174000",
-            "LoanNumber": "LN123",
-            "LoanDate": "2023-01-01T00:00:00",
-            "PaymentDate": "2023-01-15T00:00:00",
-            "SellingDate": None,
-            "LoanSum": 1000.0,
-            "DebtSum": 1050.0,
-            "InterestsSum": 50.0,
-            "Stuff": [
-                {
-                    "Presentation": "Gold Ring",
-                    "Description": "A gold ring",
-                    "FullDescription": "A beautiful gold ring",
-                    "Status": "Available",
-                    "Location": "Store 1",
-                    "LocationID": "loc123",
-                    "StuffID": "stuff123",
-                    "Price": 500.0,
-                    "BillNumber": "BN123",
-                    "StuffCode": "SC123",
-                    "Gems": None
-                }
-            ],
-            "tariffID": "tariff123",
-            "tariffDescription": None,
-            "paymentAvailable": True
-        }
+        "PUT", f"{lombardis_client.BASE_URL}/getLoanDetails", mock_data
     )
 
     result = await lombardis_client.get_loan_details("1")
     assert result == LoanDetails(
-        loan_number="LN123",
-        loan_sum=1000.0,
-        interests_sum=50.0,
-        stuff=["Gold Ring"]
+        loan_number=mock_data["LoanNumber"],
+        loan_sum=mock_data["LoanSum"],
+        interests_sum=mock_data["InterestsSum"],
+        stuff=[item.Presentation for item in mock_data["Stuff"]],
     )
     assert mock_session.get_called_with() == [
         ("PUT", f"{lombardis_client.BASE_URL}/getLoanDetails", {"loanID": "1"})
