@@ -48,15 +48,15 @@ async def loans_menu_handler(
         logfire.error("Failed to retrieve client loans.")
         return
 
-    if not client_loans.Loans:
+    if not client_loans.loans:
         await message.answer(NO_ACTIVE_LOANS)
         return
 
     keyboard = InlineKeyboardBuilder()
-    for loan in client_loans.Loans:
+    for loan in client_loans.loans:
         keyboard.button(
-            text=f"{loan.pawnBillNumber}",
-            callback_data=LoansCallback(loan_id=loan.LoanID),
+            text=f"{loan.pawn_bill_number}",
+            callback_data=LoansCallback(loan_id=loan.loan_id),
         )
     keyboard.adjust(2)
 
@@ -93,9 +93,9 @@ async def view_loans_as_editing(
     try:
         await callback.bot.edit_message_text(
             text="\n".join(
-                [f"{hbold(loan_details.LoanNumber)}\n{loan_details.LoanSum} руб.\n"]
-                + [item.Presentation for item in loan_details.Stuff]
-                + [f"\nПроценты: {hitalic(loan_details.InterestsSum)} {hitalic(RUB)}\n"]
+                [f"{hbold(loan_details.loan_number)}\n{loan_details.loan_sum} руб.\n"]
+                + [presentation for presentation in loan_details.stuff]
+                + [f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"]
             ),
             reply_markup=keyboard.as_markup(resize_keyboard=True),
             message_id=message_id,
@@ -126,9 +126,9 @@ async def view_loan_as_new_message(
     try:
         sent_message = await callback.message.answer(
             text="\n".join(
-                [f"{hbold(loan_details.LoanNumber)}\n{loan_details.LoanSum} руб.\n"]
-                + [item.Presentation for item in loan_details.Stuff]
-                + [f"\nПроценты: {hitalic(loan_details.InterestsSum)} {hitalic(RUB)}\n"]
+                [f"{hbold(loan_details.loan_number)}\n{loan_details.loan_sum} руб.\n"]
+                + [presentation for presentation in loan_details.stuff]
+                + [f"\nПроценты: {hitalic(loan_details.interests_sum)} {hitalic(RUB)}\n"]
             ),
             reply_markup=keyboard.as_markup(resize_keyboard=True),
         )

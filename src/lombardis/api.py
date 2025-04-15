@@ -1,131 +1,76 @@
-import json
-
-import aiohttp
+from typing import Type, TypeVar
+from aiohttp import ClientSession, BasicAuth
 from pydantic import ValidationError
 
-from config import conf
-from logger import logfire
-from lombardis.schemas import (ClientDetailsResponse, ClientIDResponse,
-                               ClientLoansResponse, LoanDetailsResponse)
+from lombardis.schemas import (
+    ClientIDResponse,
+    ClientDetailsResponse,
+    ClientLoansResponse,
+    LoanDetailsResponse,
+)
+from lombardis.dto import (
+    ClientID,
+    ClientDetails,
+    ClientLoans,
+    Loan,
+    LoanDetails,
+)
+from config import conf  # Assuming conf is imported from a config module
 
+T = TypeVar("T")
 
 class LombardisAsyncHTTP:
     BASE_URL = conf["LOMBARDIS_URL"]
+    AUTH = BasicAuth(conf["LOMBARDIS_USER"], conf["LOMBARDIS_PASSWORD"])
 
-    def __init__(
-        self,
-        username: str = conf["LOMBARDIS_USER"],
-        password: str = conf["LOMBARDIS_PASSWORD"],
-    ):
-        self.auth = aiohttp.BasicAuth(username, password)
-        self.headers = {"Content-Type": "application/json"}
+    async def make_request(
+        self, api_method: str, request_data: dict[str, str], response_schema: Type[T]
+    ) -> T:
+        url = f"{self.BASE_URL}/{api_method}"
+        async with ClientSession(auth=self.AUTH) as session:
+            try:
+                async with session.post(url, json=request_data) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+                    return response_schema(**data)
+            except ValidationError as e:
+                raise ValueError(f"Response validation failed: {e}")
+            except Exception as e:
+                raise RuntimeError(f"Request to {api_method} failed: {e}")
 
-    async def get_client_loans(self, client_id: str) -> ClientLoansResponse | None:
-        payload = json.dumps({"ClientID": client_id})
+    async def get_client_id(self, query_string: str) -> ClientID:
+        response = await self.make_request(
+            "getClientID", {"queryString": query_string}, ClientIDResponse
+        )
+        return ClientID(client_id=response.ClientID)
 
-        with logfire.span(f"fetching client loans cliend_id={client_id}"):
-            async with aiohttp.ClientSession(auth=self.auth) as session:
-                try:
-                    async with session.put(
-                        self.BASE_URL + "getClientLoans", data=payload, headers=self.headers
-                    ) as response:
-                        response.raise_for_status()
-                        raw_data = await response.read()
-                        json_data = json.loads(raw_data.decode("utf-8"))
-                        try:
-                            loan_resp = ClientLoansResponse(**json_data)
-                            logfire.info(
-                                f"success fetch loans count={len(loan_resp.Loans)}"
-                            )
-                            return loan_resp
-                        except ValidationError as e:
-                            logfire.exception(f"Validation Error: {e}")
-                except aiohttp.ClientResponseError as e:
-                    logfire.exception(f"HTTP Error: {e.status} - {e.message}")
-                except aiohttp.ClientError as e:
-                    logfire.exception(f"Request Error: {e}")
-                except Exception as e:
-                    logfire.exception(f"Unexpected Error: {e}")
-            return None
+    async def get_client_details(self, client_id: str) -> ClientDetails:
+        response = await self.make_request(
+            "getClientDetails", {"clientID": client_id}, ClientDetailsResponse
+        )
+        return ClientDetails(
+            full_name=f"{response.surname} {response.name} {response.patronymic or ''}".strip(),
+            phone=response.phone,
+        )
 
-    async def get_client_details(self, client_id: str) -> ClientDetailsResponse | None:
-        payload = json.dumps({"clientID": client_id})
+    async def get_client_loans(self, client_id: str) -> ClientLoans:
+        response = await self.make_request(
+            "getClientLoans", {"clientID": client_id}, ClientLoansResponse
+        )
+        return ClientLoans(
+            loans=[
+                Loan(loan.LoanID, loan.pawnBillNumber)
+                for loan in response.Loans
+            ]
+        )
 
-        with logfire.span(f"fetching client details cliend_id={client_id}"):
-            async with aiohttp.ClientSession(auth=self.auth) as session:
-                try:
-                    async with session.put(
-                        self.BASE_URL + "getClientDetails",
-                        data=payload,
-                        headers=self.headers,
-                    ) as response:
-                        response.raise_for_status()
-                        raw_data = await response.read()
-                        json_data = json.loads(raw_data.decode("utf-8"))
-                        try:
-                            client_details = ClientDetailsResponse(**json_data)
-                            logfire.info(
-                                f"success fetch client details client_id={client_id}"
-                            )
-                            return client_details
-                        except ValidationError as e:
-                            logfire.exception(f"Validation Error: {e}")
-                except aiohttp.ClientResponseError as e:
-                    logfire.exception(f"HTTP Error: {e.status} - {e.message}")
-                except aiohttp.ClientError as e:
-                    logfire.exception(f"Request Error: {e}")
-                except Exception as e:
-                    logfire.exception(f"Unexpected Error: {e}")
-            return None
-
-    async def get_loan_details(self, loan_id: str) -> LoanDetailsResponse | None:
-        payload = json.dumps({"LoanID": loan_id})
-
-        with logfire.span(f"fetching loan details loan_id={loan_id}"):
-            async with aiohttp.ClientSession(auth=self.auth) as session:
-                try:
-                    async with session.put(
-                        self.BASE_URL + "getLoanDetails", data=payload, headers=self.headers
-                    ) as response:
-                        response.raise_for_status()
-                        raw_data = await response.read()
-                        json_data = json.loads(raw_data.decode("utf-8"))
-                        loan_details = LoanDetailsResponse(**json_data)
-                        logfire.info(f"success fetch loan details loan_id={loan_id}")
-                        return loan_details
-                except ValidationError as e:
-                    logfire.exception(f"Validation Error: {e}")
-                except aiohttp.ClientResponseError as e:
-                    logfire.exception(f"HTTP Error: {e.status} - {e.message}")
-                except aiohttp.ClientError as e:
-                    logfire.exception(f"Request Error: {e}")
-                except Exception as e:
-                    logfire.exception(f"Unexpected Error: {e}")
-            return None
-
-    async def get_client_id(self, query_string: str) -> str | None:
-        payload = json.dumps({"queryString": query_string})
-
-        with logfire.span(f"fetching client ID for query={query_string}"):
-            async with aiohttp.ClientSession(auth=self.auth) as session:
-                try:
-                    async with session.put(
-                        self.BASE_URL + "getClientID", data=payload, headers=self.headers
-                    ) as response:
-                        response.raise_for_status()
-                        raw_data = await response.read()
-                        json_data = json.loads(raw_data.decode("utf-8"))
-                        client_resp = ClientIDResponse(**json_data)
-                        logfire.info(
-                            f"success fetching ClientID={client_resp.ClientID}"
-                        )
-                        return str(client_resp.ClientID)
-                except ValidationError as e:
-                    logfire.exception(f"Validation Error: {e}")
-                except aiohttp.ClientResponseError as e:
-                    logfire.exception(f"HTTP Error: {e.status} - {e.message}")
-                except aiohttp.ClientError as e:
-                    logfire.exception(f"Request Error: {e}")
-                except Exception as e:
-                    logfire.exception(f"Unexpected Error: {e}")
-            return None
+    async def get_loan_details(self, loan_id: str) -> LoanDetails:
+        response = await self.make_request(
+            "getLoanDetails", {"loanID": loan_id}, LoanDetailsResponse
+        )
+        return LoanDetails(
+            loan_number=response.LoanNumber,
+            loan_sum=response.LoanSum,
+            interests_sum=response.InterestsSum,
+            stuff=[item.Presentation for item in response.Stuff],
+        )

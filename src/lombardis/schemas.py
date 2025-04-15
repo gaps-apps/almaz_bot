@@ -16,7 +16,7 @@ class ClientIDResponse:
 
 
 @dataclass
-class Loan:
+class LoanResponse:
     LoanID: UUID
     pawnBillNumber: str
     LoanDescription: str
@@ -43,7 +43,7 @@ class ClientLoansResponse:
     errorMessage: str
     providerID: str
     taskID: UUID
-    Loans: List[Loan]
+    Loans: List[LoanResponse]
 
 
 @dataclass
@@ -71,7 +71,7 @@ class ClientDetailsResponse:
 
 
 @dataclass
-class StuffItem:
+class StuffItemResponse:
     Presentation: str
     Description: str
     FullDescription: str
@@ -105,7 +105,7 @@ class LoanDetailsResponse:
     LoanSum: float
     DebtSum: float
     InterestsSum: float
-    Stuff: List[StuffItem]
+    Stuff: List[StuffItemResponse]
     tariffID: str
     tariffDescription: Optional[str]
     paymentAvailable: bool

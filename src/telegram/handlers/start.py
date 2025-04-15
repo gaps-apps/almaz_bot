@@ -104,29 +104,26 @@ async def loan_number_handler(
         await message.answer(INVALID_LOAN_MESSAGE)
         return
 
-    client_id = await lombardis.get_client_id(f"{birthday} {loan_number}")
-
-    if client_id is None:
+    client_id_dto = await lombardis.get_client_id(f"{birthday} {loan_number}")
+    if client_id_dto is None:
         logfire.warning(
             f"Client not found for birthday {birthday} and loan number {loan_number}."
         )
         await state.clear()
         return
 
-    client_details = await lombardis.get_client_details(client_id)
+    client_details = await lombardis.get_client_details(str(client_id_dto.client_id))
     if client_details is None:
-        logfire.error(f"Failed to retrieve client details for client_id {client_id}.")
+        logfire.error(f"Failed to retrieve client details for client_id {client_id_dto.client_id}.")
         return
 
-    full_name = " ".join(
-        filter(
-            None,
-            [client_details.surname, client_details.name, client_details.patronymic],
-        )
-    )
-
     await users.add_user(
-        UserDTO(message.from_user.id, full_name, client_id, client_details.phone)
+        UserDTO(
+            message.from_user.id,
+            client_details.full_name,
+            str(client_id_dto.client_id),
+            client_details.phone,
+        )
     )
     await state.clear()
 
