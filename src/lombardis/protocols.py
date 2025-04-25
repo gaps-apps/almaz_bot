@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from lombardis.dto import ClientID, ClientDetails, ClientLoans, LoanDetails
+from lombardis.dto import ClientDetails, ClientID, ClientLoans, LoanDetails
 
 
 class LombardisAPI(Protocol):

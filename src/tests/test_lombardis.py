@@ -1,21 +1,20 @@
-import sys
 import os
+import sys
 from contextlib import asynccontextmanager
-from polyfactory.factories import DataclassFactory
+
 import pytest
 from dotenv import load_dotenv
+from polyfactory.factories import DataclassFactory
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 load_dotenv(os.path.abspath(os.path.join(os.path.dirname(__file__), "../deploy/.env")))
 
 from lombardis.api import LombardisAsyncHTTP
-from lombardis.dto import ClientID, ClientDetails, ClientLoans, LoanDetails, Loan
-from lombardis.schemas import (
-    ClientIDResponse,
-    ClientDetailsResponse,
-    ClientLoansResponse,
-    LoanDetailsResponse,
-)  # Use schemas from schemas.py
+from lombardis.dto import (ClientDetails, ClientID, ClientLoans, Loan,
+                           LoanDetails)
+from lombardis.schemas import (  # Use schemas from schemas.py
+    ClientDetailsResponse, ClientIDResponse, ClientLoansResponse,
+    LoanDetailsResponse)
 
 
 # Define factories for each schema

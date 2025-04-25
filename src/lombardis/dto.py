@@ -1,6 +1,7 @@
-from pydantic.dataclasses import dataclass
 from typing import List
 from uuid import UUID
+
+from pydantic.dataclasses import dataclass
 
 
 @dataclass

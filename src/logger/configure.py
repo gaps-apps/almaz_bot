@@ -1,5 +1,6 @@
-import logfire
 from logging import basicConfig
+
+import logfire
 
 from config import conf
 

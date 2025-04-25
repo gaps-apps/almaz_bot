@@ -10,10 +10,10 @@ down:
 
 black:
 	black ./src
-	python -m isort ./src
+	isort ./src
 
 check:
-	ruff check ./src
-	python -m mypy ./src
+	ruff check ./src --exclude src/tests
+	mypy ./src --exclude src/tests
 
 .PHONY: clean, up, down, black, check

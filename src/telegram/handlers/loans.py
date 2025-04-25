@@ -1,6 +1,6 @@
+import logging
 from uuid import UUID
 
-import logging
 from aiogram import F, Router
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
@@ -12,14 +12,9 @@ from aiogram.utils.markdown import hbold, hitalic
 from lombardis.protocols import LombardisAPI
 from repository.protocols import UsersRepo
 
-from .text_constants import (
-    LOANS_MENU_TEXT,
-    NO_ACTIVE_LOANS,
-    PAWN_TICKET_HEADER,
-    PAY_LOAN_BUTTON,
-    PAYLOAN_SELECTION_MESSAGE,
-    RUB,
-)
+from .text_constants import (LOANS_MENU_TEXT, NO_ACTIVE_LOANS,
+                             PAWN_TICKET_HEADER, PAY_LOAN_BUTTON,
+                             PAYLOAN_SELECTION_MESSAGE, RUB)
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +62,9 @@ async def loans_menu_handler(
         logger.exception(f"Error in loans_menu_handler: {e}")
 
 
-async def _generate_loan_details_message(lombardis: LombardisAPI, loan_id: str):
+async def _generate_loan_details_message(
+    lombardis: LombardisAPI, loan_id: str
+) -> tuple[str, InlineKeyboardBuilder]:
     try:
         loan_details = await lombardis.get_loan_details(loan_id)
 
@@ -82,6 +79,7 @@ async def _generate_loan_details_message(lombardis: LombardisAPI, loan_id: str):
         return message_text, keyboard
     except Exception as e:
         logger.exception(f"Error in _generate_loan_details_message: {e}")
+        raise RuntimeError(f"Cant generate_loan_details for {loan_id}: {e}")
 
 
 @router.callback_query(LoansCallback.filter(), LoanDetailsMode.as_editing)
@@ -95,7 +93,9 @@ async def view_loans_as_editing(
     assert callback.message is not None
     try:
         loan_id = str(callback_data.loan_id)
-        message_text, keyboard = await _generate_loan_details_message(lombardis, loan_id)
+        message_text, keyboard = await _generate_loan_details_message(
+            lombardis, loan_id
+        )
 
         state_data = await state.get_data()
         message_id = state_data.get("loan_details_message_id")
@@ -123,7 +123,9 @@ async def view_loan_as_new_message(
     assert callback.message is not None
     try:
         loan_id = str(callback_data.loan_id)
-        message_text, keyboard = await _generate_loan_details_message(lombardis, loan_id)
+        message_text, keyboard = await _generate_loan_details_message(
+            lombardis, loan_id
+        )
 
         sent_message = await callback.message.answer(
             text=message_text,

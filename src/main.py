@@ -4,17 +4,13 @@ from aiogram import Bot
 from aiohttp import web
 
 from config import conf
-
-from lombardis.protocols import LombardisAPI
 from lombardis.api import LombardisAsyncHTTP
-
+from lombardis.protocols import LombardisAPI
 from repository.protocols import UsersRepo
 from repository.users import UsersRepoSQLite
-
 from telegram.bot import get_dispatcher
-from telegram.webhook import get_webhook_app
 from telegram.handlers.commands_menu import set_bot_commands
-
+from telegram.webhook import get_webhook_app
 from tests.fakes.lombardis import LombardisFake
 
 

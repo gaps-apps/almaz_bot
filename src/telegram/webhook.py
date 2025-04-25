@@ -1,9 +1,10 @@
 import hashlib
-import random
 import logging
+import random
 
 from aiogram import Bot, Dispatcher
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiogram.webhook.aiohttp_server import (SimpleRequestHandler,
+                                            setup_application)
 from aiohttp import web
 
 from config import conf

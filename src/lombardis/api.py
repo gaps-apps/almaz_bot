@@ -1,22 +1,14 @@
-from typing import Type, TypeVar, Optional
-from aiohttp import ClientSession, BasicAuth
-from pydantic import ValidationError
 from enum import Enum
+from typing import Optional, Type, TypeVar
 
-from lombardis.schemas import (
-    ClientIDResponse,
-    ClientDetailsResponse,
-    ClientLoansResponse,
-    LoanDetailsResponse,
-)
-from lombardis.dto import (
-    ClientID,
-    ClientDetails,
-    ClientLoans,
-    Loan,
-    LoanDetails,
-)
+from aiohttp import BasicAuth, ClientSession
+from pydantic import ValidationError
+
 from config import conf  # Assuming conf is imported from a config module
+from lombardis.dto import (ClientDetails, ClientID, ClientLoans, Loan,
+                           LoanDetails)
+from lombardis.schemas import (ClientDetailsResponse, ClientIDResponse,
+                               ClientLoansResponse, LoanDetailsResponse)
 
 T = TypeVar("T")
 

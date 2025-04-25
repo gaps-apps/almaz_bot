@@ -1,7 +1,8 @@
 import random
 import uuid
 
-from lombardis.dto import ClientID, ClientDetails, ClientLoans, Loan, LoanDetails
+from lombardis.dto import (ClientDetails, ClientID, ClientLoans, Loan,
+                           LoanDetails)
 from lombardis.protocols import LombardisAPI
 
 
