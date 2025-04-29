@@ -13,4 +13,7 @@ check:
 	flake8 ./src --select=WPS --ignore WPS115 --exclude src/tests
 	mypy ./src --exclude src/tests
 
-.PHONY: clean, up, down, black, check
+test:
+	python run_tests.py
+
+.PHONY: clean, up, down, check, test
