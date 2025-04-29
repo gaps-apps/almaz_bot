@@ -3,8 +3,7 @@ import logging
 import random
 
 from aiogram import Bot, Dispatcher
-from aiogram.webhook.aiohttp_server import (SimpleRequestHandler,
-                                            setup_application)
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
 from config import conf
@@ -26,7 +25,6 @@ logger = logging.getLogger(__name__)
 def get_webhook_app(
     dp: Dispatcher, bot: Bot, users: UsersRepo, lombardis: LombardisAPI
 ) -> web.Application:
-
     async def on_startup() -> None:
         await bot.set_webhook(WEBHOOK_URL, secret_token=WEBHOOK_SECRET)
         logger.info(WEBHOOK_SUCCESS)

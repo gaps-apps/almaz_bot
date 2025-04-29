@@ -12,9 +12,14 @@ from aiogram.utils.markdown import hbold, hitalic
 from lombardis.protocols import LombardisAPI
 from repository.protocols import UsersRepo
 
-from .text_constants import (LOANS_MENU_TEXT, NO_ACTIVE_LOANS,
-                             PAWN_TICKET_HEADER, PAY_LOAN_BUTTON,
-                             PAYLOAN_SELECTION_MESSAGE, RUB)
+from .text_constants import (
+    LOANS_MENU_TEXT,
+    NO_ACTIVE_LOANS,
+    PAWN_TICKET_HEADER,
+    PAY_LOAN_BUTTON,
+    PAYLOAN_SELECTION_MESSAGE,
+    RUB,
+)
 
 logger = logging.getLogger(__name__)
 

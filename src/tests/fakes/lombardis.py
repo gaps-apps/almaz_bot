@@ -1,8 +1,7 @@
 import random
 import uuid
 
-from lombardis.dto import (ClientDetails, ClientID, ClientLoans, Loan,
-                           LoanDetails)
+from lombardis.dto import ClientDetails, ClientID, ClientLoans, Loan, LoanDetails
 from lombardis.protocols import LombardisAPI
 
 
@@ -38,7 +37,6 @@ LOAN_DETAILS = {
 
 
 class LombardisFake(LombardisAPI):
-
     async def get_client_id(self, query_string: str) -> ClientID:
         return ClientID(client_id=uuid.uuid4())
 

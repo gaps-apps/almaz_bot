@@ -8,12 +8,9 @@ up:
 down:
 	cd deploy && docker compose down
 
-black:
-	black ./src
-	isort ./src
-
 check:
-	ruff check ./src --exclude src/tests
+	ruff check ./src && ruff format ./src
+	flake8 ./src --select=WPS --ignore WPS115 --exclude src/tests
 	mypy ./src --exclude src/tests
 
 .PHONY: clean, up, down, black, check

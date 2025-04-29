@@ -4,11 +4,15 @@ from typing import Optional, Type, TypeVar
 from aiohttp import BasicAuth, ClientSession
 from pydantic import ValidationError
 
-from config import conf  # Assuming conf is imported from a config module
-from lombardis.dto import (ClientDetails, ClientID, ClientLoans, Loan,
-                           LoanDetails)
-from lombardis.schemas import (ClientDetailsResponse, ClientIDResponse,
-                               ClientLoansResponse, LoanDetailsResponse)
+from config import conf
+
+from lombardis.dto import ClientDetails, ClientID, ClientLoans, Loan, LoanDetails
+from lombardis.schemas import (
+    ClientDetailsResponse,
+    ClientIDResponse,
+    ClientLoansResponse,
+    LoanDetailsResponse,
+)
 
 T = TypeVar("T")
 

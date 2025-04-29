@@ -9,17 +9,22 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.utils.markdown import hitalic
-from aiogram_calendar import (DialogCalendar, DialogCalendarCallback,
-                              get_user_locale)
+from aiogram_calendar import DialogCalendar, DialogCalendarCallback, get_user_locale
 
 from lombardis.protocols import LombardisAPI
 from repository.dto import User
 from repository.protocols import UsersRepo
 
 from .helpers import replace_english_with_russian
-from .text_constants import (AUTH_NEEDED, BIRTHDAY_PLEASE, GREETINGS,
-                             INVALID_BIRTHDAY_MESSAGE, INVALID_LOAN_MESSAGE,
-                             LOAN_NUMBER_PLEASE, LOANS_MENU_TEXT)
+from .text_constants import (
+    AUTH_NEEDED,
+    BIRTHDAY_PLEASE,
+    GREETINGS,
+    INVALID_BIRTHDAY_MESSAGE,
+    INVALID_LOAN_MESSAGE,
+    LOAN_NUMBER_PLEASE,
+    LOANS_MENU_TEXT,
+)
 
 logger = logging.getLogger(__name__)
 
