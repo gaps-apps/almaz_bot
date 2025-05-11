@@ -103,7 +103,6 @@ async def loan_number_handler(
     assert message.from_user is not None
 
     try:
-
         user_data = await state.get_data()
         birthday = user_data.get("birthday")
         if not birthday:
