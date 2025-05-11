@@ -15,7 +15,7 @@ from lombardis.protocols import LombardisAPI
 from repository.dto import User
 from repository.protocols import UsersRepo
 
-from .helpers import replace_english_with_russian
+from .helpers import ensure_loan_number_format
 from .text_constants import (
     AUTH_NEEDED,
     BIRTHDAY_PLEASE,
@@ -113,7 +113,7 @@ async def loan_number_handler(
             await state.clear()
             return
 
-        loan_number = replace_english_with_russian(message.text.strip())
+        loan_number = ensure_loan_number_format(message.text.strip())
         if len(loan_number) != 8:
             await message.answer(INVALID_LOAN_MESSAGE)
             return
